@@ -1,6 +1,7 @@
 fastapi
 uvicorn
-scikit-learn==1.5.2; python_version < "3.13"
+scikit-learn==1.2.2
 joblib
 numpy
+
 
