@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Nexora.AI – A.Al.F.D.S</title>
+  <style>
+    body { font-family: 'Segoe UI'; background: #f9f9f9; padding: 30px; }
+    h2 { color: #222; }
+    input, button { margin: 5px 0; padding: 10px; width: 260px; }
+  </style>
+</head>
+<body>
+  <h2>Nexora.AI – Check for Fraud</h2>
+  <form id="form">
+    <input name="feature1" placeholder="Feature 1" required><br>
+    <input name="feature2" placeholder="Feature 2" required><br>
+    <input name="feature3" placeholder="Feature 3" required><br>
+    <input name="feature4" placeholder="Feature 4" required><br>
+    <button type="submit">Check</button>
+  </form>
+  <p id="result"></p>
+
+  <script>
+    document.getElementById("form").onsubmit = async (e) => {
+      e.preventDefault();
+      const form = new FormData(e.target);
+      const data = Object.fromEntries(form.entries());
+      const res = await fetch("https://your-backend-url.onrender.com/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      const json = await res.json();
+      document.getElementById("result").innerText =
+        json.fraudulent ? "⚠️ Fraudulent Transaction" : "✅ Transaction Safe";
+    };
+  </script>
+</body>
+</html>
