@@ -9,7 +9,7 @@ model_path = "fraud_model.pkl"
 if not os.path.exists(model_path):
     raise FileNotFoundError("Model file not found!")
 
-model = joblib.load(model_path)
+model = joblib.load("fraud_model.pkl")
 
 # Define the FastAPI app
 app = FastAPI()
