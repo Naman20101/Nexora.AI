@@ -1,36 +1,35 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-import pickle
+from fastapi import FastAPI
+import joblib
 import numpy as np
+from pydantic import BaseModel
 
 app = FastAPI()
 
-class InputData(BaseModel):
-    features: list  # expects a list of numbers
+class Transaction(BaseModel):
+    data: list  # expects 30 features from the creditcard dataset
 
+# Try loading model at startup
 try:
-    with open("fraud_model (2).pkl", "rb") as f:
-        model = pickle.load(f)
-    model_ready = True
+    model = joblib.load("fraud_model.pkl")
+    print("✅ Model loaded successfully")
 except Exception as e:
-    model_ready = False
     model = None
-    print(f"Model loading failed: {e}")
+    print(f"❌ Model loading failed: {e}")
 
 @app.get("/")
-def root():
-    return {"status": "Model is ready" if model_ready else "Model failed to load"}
+def read_root():
+    return {"message": "Fraud Detection API is running."}
 
 @app.post("/predict")
-def predict(data: InputData):
-    if not model_ready:
-        raise HTTPException(status_code=500, detail="Model not loaded")
-
+def predict(transaction: Transaction):
+    if model is None:
+        return {"status": "Model not loaded"}
     try:
-        features = np.array(data.features).reshape(1, -1)
-        prediction = model.predict(features)
-        return {"prediction": prediction.tolist()}
+        input_array = np.array(transaction.data).reshape(1, -1)
+        prediction = model.predict(input_array)[0]
+        return {"prediction": int(prediction)}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+        return {"error": str(e)}
+
 
 
