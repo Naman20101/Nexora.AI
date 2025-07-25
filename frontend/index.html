@@ -1,38 +1,94 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Nexora.AI – A.Al.F.D.S</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Nexora AI - Fraud Detection</title>
   <style>
-    body { font-family: 'Segoe UI'; background: #f9f9f9; padding: 30px; }
-    h2 { color: #222; }
-    input, button { margin: 5px 0; padding: 10px; width: 260px; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      width: 300px;
+    }
+    input {
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+    }
+    button {
+      padding: 12px;
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .result {
+      margin-top: 20px;
+      font-size: 18px;
+    }
   </style>
 </head>
 <body>
-  <h2>Nexora.AI – Check for Fraud</h2>
-  <form id="form">
-    <input name="feature1" placeholder="Feature 1" required><br>
-    <input name="feature2" placeholder="Feature 2" required><br>
-    <input name="feature3" placeholder="Feature 3" required><br>
-    <input name="feature4" placeholder="Feature 4" required><br>
-    <button type="submit">Check</button>
+
+  <h1>Nexora.AI — Fraud Detection</h1>
+
+  <form id="prediction-form">
+    <input type="number" step="any" name="feature1" placeholder="Enter Feature 1" required />
+    <input type="number" step="any" name="feature2" placeholder="Enter Feature 2" required />
+    <input type="number" step="any" name="feature3" placeholder="Enter Feature 3" required />
+    <!-- Add/remove more fields based on your model -->
+    <button type="submit">Detect Fraud</button>
   </form>
-  <p id="result"></p>
+
+  <div class="result" id="result"></div>
 
   <script>
-    document.getElementById("form").onsubmit = async (e) => {
+    const form = document.getElementById("prediction-form");
+    const resultDiv = document.getElementById("result");
+
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const form = new FormData(e.target);
-      const data = Object.fromEntries(form.entries());
-      const res = await fetch("https://your-backend-url.onrender.com/predict", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-      });
-      const json = await res.json();
-      document.getElementById("result").innerText =
-        json.fraudulent ? "⚠️ Fraudulent Transaction" : "✅ Transaction Safe";
-    };
+
+      const formData = new FormData(form);
+      const inputData = Object.fromEntries(formData.entries());
+
+      // Convert all inputs to floats
+      for (let key in inputData) {
+        inputData[key] = parseFloat(inputData[key]);
+      }
+
+      try {
+        const res = await fetch("https://nexora-ai-a-al-f-d-s-advanced-ai-powered.onrender.com/predict", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(inputData)
+        });
+
+        const data = await res.json();
+        resultDiv.innerText = `Prediction: ${data.prediction}`;
+      } catch (err) {
+        resultDiv.innerText = "Error contacting backend.";
+        console.error(err);
+      }
+    });
   </script>
+
 </body>
 </html>
+
