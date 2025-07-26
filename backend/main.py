@@ -1,43 +1,79 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List
 import joblib
-import numpy as np
+import os
 
-app = FastAPI()
+# App metadata and Swagger UI description
+app = FastAPI(
+    title="🔍 Nexora.ai — Advanced Fraud Detection API (A.P.F.D.S)",
+    description="""
+💳 **Advanced Real-Time Credit Card Fraud Detection API**
 
-# Input schema
-class Transaction(BaseModel):
-    data: List[float]  # expects 30 float features
+🧠 **Model Type**: Supervised Machine Learning  
+📚 **Dataset**: [Kaggle’s Credit Card Fraud Detection](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)  
+📊 **Transactions**: 284,807 total — only 492 fraud cases  
+⚙️ **Stack**: FastAPI · scikit-learn · joblib · Render/Vercel · React Frontend  
+🔐 **Security**: Input validation (Pydantic) · Pickle-safe loading  
+
+---
+
+### 📌 Endpoints:
+- `GET /` → Health check (returns app status)
+- `POST /predict` → Fraud prediction from 30 V1–V28, Time & Amount features
+
+👨‍💻 **Developed by**: Naman Reddy  
+🔒 **Status**: Alpha v1.0 (Private Test Deployment)
+
+""",
+    version="1.0.0"
+)
+
+# Path to model
+MODEL_PATH = "fraud_model.pkl"
 
 # Load model
 model = None
-try:
-    model = joblib.load("fraud_model.pkl")
-    print("✅ Model loaded successfully")
-except Exception as e:
-    print(f"❌ Model loading failed: {e}")
+if os.path.exists(MODEL_PATH):
+    try:
+        model = joblib.load(MODEL_PATH)
+        print("✅ Model loaded successfully")
+    except Exception as e:
+        print(f"❌ Model loading failed: {e}")
+else:
+    print("❌ Model not found - waiting for upload")
 
-# Root endpoint
+
+# Pydantic input schema
+class FraudInput(BaseModel):
+    features: List[float]  # Length must be 30
+
+
+# Root health check
 @app.get("/")
 def read_root():
-    return {"message": "Fraud Detection API is running."}
+    if model is None:
+        return {"status": "Model not ready. Please upload model file."}
+    return {"status": "Nexora.ai API is live 🚀", "model": "Loaded ✅"}
+
 
 # Prediction endpoint
 @app.post("/predict")
-def predict(transaction: Transaction):
+def predict_fraud(data: FraudInput):
     if model is None:
-        return {"status": "Model not loaded"}
-    
-    if len(transaction.data) != 30:
-        return {"error": "Exactly 30 features are required."}
+        raise HTTPException(status_code=503, detail="Model not loaded yet")
+
+    if len(data.features) != 30:
+        raise HTTPException(status_code=422, detail="Exactly 30 features required")
 
     try:
-        input_array = np.array(transaction.data).reshape(1, -1)
-        prediction = model.predict(input_array)[0]
-        return {"prediction": int(prediction)}
+        prediction = model.predict([data.features])[0]
+        return {
+            "prediction": int(prediction),
+            "result": "Fraudulent" if prediction == 1 else "Legitimate"
+        }
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=f"Inference failed: {str(e)}")
 
 
 
