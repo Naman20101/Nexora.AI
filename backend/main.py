@@ -6,7 +6,7 @@ import os
 
 # App metadata and Swagger UI description
 app = FastAPI(
-    title="🔍 Nexora.ai — Advanced Fraud Detection API (A.P.F.D.S)",
+    title="🔍 Nexora.ai — Advanced Fraud Detection API ",
     description="""
 💳 **Advanced Real-Time Credit Card Fraud Detection API**
 
