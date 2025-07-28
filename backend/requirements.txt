@@ -1,7 +1,8 @@
 fastapi
 uvicorn
 scikit-learn==1.2.2 --only-binary :all:
-joblib
 numpy
+pydantic
+
 
 
