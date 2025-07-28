@@ -1,49 +1,61 @@
-# pyright: reportMissingImports=false
-
-import pandas as pd
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from pydantic import BaseModel
-import pickle
+import joblib
+import numpy as np
+import uvicorn
 
-# Load the trained model
-with open("fraud_model.pkl", "rb") as f:
-    model = pickle.load(f)
+app = FastAPI()
 
-app = FastAPI(
-    title="Nexora.ai (A.AI.P.F.D.S)",
-    description="An AI-powered fraud detection system that analyzes transaction patterns and detects anomalies in real-time. Developed by Naman Reddy.",
-    version="v3.0"
-)
+# Load model
+model = joblib.load("fraud_model.pkl")
 
-# Pydantic model for input validation
+# Define input schema
 class Transaction(BaseModel):
-    amount: float
-    oldbalanceOrg: float
-    newbalanceOrig: float
+    V1: float
+    V2: float
+    V3: float
+    V4: float
+    V5: float
+    V6: float
+    V7: float
+    V8: float
+    V9: float
+    V10: float
+    V11: float
+    V12: float
+    V13: float
+    V14: float
+    V15: float
+    V16: float
+    V17: float
+    V18: float
+    V19: float
+    V20: float
+    V21: float
+    V22: float
+    V23: float
+    V24: float
+    V25: float
+    V26: float
+    V27: float
+    V28: float
+    Amount: float
 
 @app.get("/")
-def read_root():
-    return {
-        "message": "Welcome to Nexora.ai (A.AI.P.F.D.S) - Fraud Detection API 🚀",
-        "author": "Naman Reddy",
-        "version": "v3.0"
-    }
+def home():
+    return {"message": "Nexora.ai - A.P.F.D.S backend is running."}
 
 @app.post("/predict")
-def predict_fraud(transaction: Transaction):
-    try:
-        features = [[
-            transaction.amount,
-            transaction.oldbalanceOrg,
-            transaction.newbalanceOrig
-        ]]
-        prediction = model.predict(features)[0]
-        result = "Fraudulent Transaction ⚠️" if prediction == 1 else "Legitimate Transaction ✅"
-        return {
-            "prediction": int(prediction),
-            "result": result
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+def predict(transaction: Transaction):
+    data = np.array([[getattr(transaction, f"V{i}") for i in range(1, 29)] + [transaction.Amount]])
+    prediction = model.predict(data)[0]
+    return {
+        "prediction": int(prediction),
+        "message": "Fraudulent Transaction" if prediction == 1 else "Legitimate Transaction"
+    }
+
+# Uncomment this if you're testing locally:
+# if __name__ == "__main__":
+#     uvicorn.run(app, host="0.0.0.0", port=8000)
 
 
