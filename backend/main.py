@@ -1,15 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import joblib
-import numpy as np
-import uvicorn
+import traceback
+import os
 
 app = FastAPI()
 
-# Load model
-model = joblib.load("fraud_model.pkl")
-
-# Define input schema
 class Transaction(BaseModel):
     V1: float
     V2: float
@@ -41,21 +37,39 @@ class Transaction(BaseModel):
     V28: float
     Amount: float
 
+# Load the model
+try:
+    model = joblib.load("fraud_model.pkl")
+except Exception as e:
+    print("❌ Error loading model:", e)
+    traceback.print_exc()
+    model = None
+
 @app.get("/")
 def home():
-    return {"message": "Nexora.ai - A.P.F.D.S backend is running."}
+    return {"message": "Nexora.ai - A.AI.P.F.D.S backend is running."}
 
 @app.post("/predict")
 def predict(transaction: Transaction):
-    data = np.array([[getattr(transaction, f"V{i}") for i in range(1, 29)] + [transaction.Amount]])
-    prediction = model.predict(data)[0]
-    return {
-        "prediction": int(prediction),
-        "message": "Fraudulent Transaction" if prediction == 1 else "Legitimate Transaction"
-    }
+    if model is None:
+        raise HTTPException(status_code=500, detail="Model could not be loaded.")
 
-# Uncomment this if you're testing locally:
-# if __name__ == "__main__":
-#     uvicorn.run(app, host="0.0.0.0", port=8000)
+    try:
+        features = [[
+            transaction.V1, transaction.V2, transaction.V3, transaction.V4, transaction.V5,
+            transaction.V6, transaction.V7, transaction.V8, transaction.V9, transaction.V10,
+            transaction.V11, transaction.V12, transaction.V13, transaction.V14, transaction.V15,
+            transaction.V16, transaction.V17, transaction.V18, transaction.V19, transaction.V20,
+            transaction.V21, transaction.V22, transaction.V23, transaction.V24, transaction.V25,
+            transaction.V26, transaction.V27, transaction.V28, transaction.Amount
+        ]]
+        prediction = model.predict(features)[0]
+        label = "Fraudulent Transaction" if prediction == 1 else "Legitimate Transaction"
+        return {"prediction": int(prediction), "message": label}
+
+    except Exception as e:
+        print("❌ Prediction Error:", e)
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail="Error during prediction. Check logs.")
 
 
