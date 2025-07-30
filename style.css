@@ -1,35 +1,84 @@
 body {
+  margin: 0;
+  padding: 0;
   font-family: 'Segoe UI', sans-serif;
-  background: #0f172a;
+  background-color: #0f172a;
   color: white;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 40px;
+  scroll-behavior: smooth;
 }
+
+header {
+  text-align: center;
+  padding: 60px 20px 30px;
+}
+
 h1 {
-  margin-bottom: 20px;
+  font-size: 48px;
+  color: #00ffe7;
+  text-shadow: 0 0 10px #00ffe7;
 }
-form {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  width: 300px;
-}
-input {
-  padding: 10px;
-  border: none;
-  border-radius: 8px;
-}
-button {
-  padding: 12px;
-  background-color: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-.result {
-  margin-top: 20px;
+
+.tagline {
   font-size: 18px;
+  color: #b0bec5;
+  margin-top: 10px;
+}
+
+.features-section,
+.apps-section,
+.about-section {
+  padding: 50px 20px;
+  text-align: center;
+}
+
+.features-row,
+.apps-row {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+  margin-top: 30px;
+}
+
+.feature {
+  background: #1e293b;
+  border: 1px solid #00ffe7;
+  border-radius: 12px;
+  padding: 20px;
+  width: 250px;
+  box-shadow: 0 0 15px #00ffe7;
+  transition: transform 0.3s ease;
+}
+.feature:hover {
+  transform: scale(1.05);
+}
+
+.app-icon {
+  width: 120px;
+  height: 120px;
+  background: #1e293b;
+  border-radius: 50%;
+  font-size: 18px;
+  color: white;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 15px #00ffe7;
+  transition: transform 0.3s ease;
+}
+.app-icon:hover {
+  transform: scale(1.1);
+}
+
+/* Icon-specific styles */
+.paypal::before { content: "🅿️"; margin-right: 6px; }
+.paytm::before { content: "💳"; margin-right: 6px; }
+.phonepe::before { content: "📱"; margin-right: 6px; }
+.gpay::before { content: "🅖"; margin-right: 6px; }
+
+.about-section p {
+  max-width: 700px;
+  margin: 10px auto;
+  color: #cbd5e1;
 }
