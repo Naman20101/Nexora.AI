@@ -1,37 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Nexora.ai – AI Fraud Detection</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>Nexora.ai – AI-Powered Fraud Detection</title>
+  <script defer src="script.js"></script>
+  <style>
+    body {
+      background-color: #111;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px;
+    }
+
+    h1 {
+      color: #00ffcc;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      width: 60%;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      font-size: 14px;
+    }
+
+    input {
+      padding: 8px;
+      border-radius: 5px;
+      border: none;
+      background-color: #222;
+      color: #fff;
+    }
+
+    button {
+      grid-column: span 2;
+      padding: 12px;
+      margin-top: 20px;
+      background-color: #00ffcc;
+      color: #000;
+      font-weight: bold;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #result {
+      margin-top: 30px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #00ffcc;
+    }
+  </style>
 </head>
 <body>
-  <header class="hero">
-    <h1>Nexora.ai</h1>
-    <p>AI-Powered Fraud Detection System</p>
-    <div class="btns">
-      <a href="#apps" class="btn">Get Started</a>
-      <a href="#about" class="btn">Learn More</a>
-    </div>
-  </header>
+  <h1>Nexora.ai – AI-Powered Fraud Detection</h1>
 
-  <section id="about" class="slide dark">
-    <h2>What is Nexora?</h2>
-    <p>An advanced AI system that analyzes 29 features of your transaction to detect fraud in real time.</p>
-  </section>
+  <form id="fraudForm">
+    <!-- Generate V1 to V28 + Amount -->
+    <!-- We'll insert all 29 fields below -->
+    <script>
+      const fields = [];
+      for (let i = 1; i <= 28; i++) {
+        fields.push(`<label>V${i}:<input type="number" name="V${i}" required></label>`);
+      }
+      fields.push(`<label>Amount:<input type="number" name="Amount" required></label>`);
+      document.write(fields.join(''));
+    </script>
 
-  <section id="apps" class="slide">
-    <h2>Choose Your Platform</h2>
-    <div class="apps-grid">
-      <a href="#"><img src="paytm.png" alt="Paytm" /></a>
-      <a href="#"><img src="paypal.png" alt="PayPal" /></a>
-      <a href="#"><img src="phonepe.png" alt="PhonePe" /></a>
-      <a href="#"><img src="gpay.png" alt="Google Pay" /></a>
-    </div>
-  </section>
+    <button type="submit">Detect Fraud</button>
+  </form>
 
-  <script src="script.js"></script>
+  <div id="result"></div>
 </body>
 </html>
+
 
