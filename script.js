@@ -1,1 +1,5 @@
-// Future JavaScript animations or interactivity can go here
+// Placeholder for future transitions
+window.addEventListener('DOMContentLoaded', () => {
+    console.log('Nexora Front Page Loaded');
+  });
+
