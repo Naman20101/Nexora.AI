@@ -2,7 +2,7 @@ const apps = [
   // India
   { name: "Paytm", logo: "images/paytm.png", link: "https://paytm.com" },
   { name: "PhonePe", logo: "images/phonepe.png", link: "https://www.phonepe.com/" },
-  { name: "Google Pay", logo: "images/googlepay.png", link: "https://pay.google.com/" },
+  { name: "Google Pay", logo: "images/gpay.png", link: "https://pay.google.com/" },
   { name: "Amazon Pay", logo: "images/amazonpay.png", link: "https://pay.amazon.in" },
   { name: "BHIM", logo: "images/bhim.png", link: "https://www.bhimupi.org.in/" },
   { name: "MobiKwik", logo: "images/mobikwik.png", link: "https://www.mobikwik.com/" },
