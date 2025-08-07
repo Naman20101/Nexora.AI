@@ -1,5 +1,5 @@
 const paymentApps = {
-    "Paytm": { link: "https://paytm.com", logo: "logos/paytm.png" },
+    "Paytm": { link: "https://paytm.com", logo: "image/paytm.png" },
     "Google Pay": { link: "https://pay.google.com", logo: "logos/googlepay.png" },
     "PhonePe": { link: "https://phonepe.com", logo: "logos/phonepe.png" },
     "BHIM": { link: "https://bhimupi.org.in", logo: "logos/bhim.png" },
