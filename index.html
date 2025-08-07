@@ -1,65 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Nexora.ai (A.P.F.D.S)</title>
-  <style>
-    body {
-      text-align: center;
-      font-family: Arial, sans-serif;
-      background-color: white;
-    }
-    h1 {
-      font-size: 2em;
-    }
-    .payment-options {
-      margin-top: 30px;
-    }
-    .payment-options a img {
-      width: 100px;
-      height: 100px;
-      margin: 20px;
-      object-fit: contain;
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-    .payment-options a img:hover {
-      transform: scale(1.1);
-    }
-    footer {
-      margin-top: 50px;
-      font-size: 0.9em;
-      color: gray;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Global Payment Apps</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div class="search-container">
+    <input type="text" id="searchInput" placeholder="Search payment apps..." />
+  </div>
 
-  <h1><strong>Nexora.ai (A.P.F.D.S)</strong></h1>
-  <p>AI-Powered Fraud Detection for Digital Payments</p>
+  <div id="appsContainer" class="apps-grid">
+    <!-- Cards will be dynamically injected by JS -->
+  </div>
 
-  <h2>Choose a Payment App</h2>
-
-<div class="payment-options">
-  <a href="https://paytm.com" target="_blank">
-    <img src="images/paytm.png" alt="Paytm">
-  </a>
-  <a href="https://pay.google.com" target="_blank">
-    <img src="images/googlepay.png" alt="Google Pay">
-  </a>
-  <a href="https://www.phonepe.com" target="_blank">
-    <img src="images/phonepe.png" alt="PhonePe">
-  </a>
-  <a href="https://www.paypal.com" target="_blank">
-    <img src="images/paypal.png" alt="PayPal">
-  </a>
-</div>
-
-
-  <footer>
-    Developed by Naman Reddy • Nexora.ai
-  </footer>
-
+  <script src="script.js"></script>
 </body>
 </html>
 
