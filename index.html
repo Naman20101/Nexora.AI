@@ -17,9 +17,14 @@
     }
     .payment-options a img {
       width: 100px;
-      height: auto;
+      height: 100px;
       margin: 20px;
+      object-fit: contain;
       cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .payment-options a img:hover {
+      transform: scale(1.1);
     }
     footer {
       margin-top: 50px;
@@ -36,10 +41,18 @@
   <h2>Choose a Payment App</h2>
 
   <div class="payment-options">
-    <a href="#"><img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Paytm_logo.png" alt="Paytm"></a>
-    <a href="#"><img src="https://upload.wikimedia.org/wikipedia/commons/5/5b/Google_Pay_Logo.svg" alt="Google Pay"></a>
-    <a href="#"><img src="https://upload.wikimedia.org/wikipedia/commons/f/f0/PhonePe_Logo.svg" alt="PhonePe"></a>
-    <a href="#"><img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal"></a>
+    <a href="https://paytm.com" target="_blank">
+      <img src="https://logowik.com/content/uploads/images/810_paytm.jpg" alt="Paytm">
+    </a>
+    <a href="https://pay.google.com" target="_blank">
+      <img src="https://1000logos.net/wp-content/uploads/2021/05/Google-Pay-logo.png" alt="Google Pay">
+    </a>
+    <a href="https://www.phonepe.com/" target="_blank">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/PhonePe_Logo.svg/2048px-PhonePe_Logo.svg.png" alt="PhonePe">
+    </a>
+    <a href="https://www.paypal.com" target="_blank">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal">
+    </a>
   </div>
 
   <footer>
