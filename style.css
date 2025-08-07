@@ -1,90 +1,102 @@
 body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #0d0d0d;
+  color: #ffffff;
   margin: 0;
   padding: 0;
-  background-color: #111;
-  font-family: 'Segoe UI', sans-serif;
-  color: white;
   text-align: center;
 }
 
-.container {
-  padding: 50px 20px;
+.header {
+  padding: 40px 20px 20px;
 }
 
-.brand-name {
-  font-size: 2.5em;
-  color: #00ffe5;
-  text-shadow: 0 0 10px #00ffe5;
+.brand {
+  font-size: 48px;
+  font-weight: 700;
+  color: #0ff; /* Reduced neon effect */
+  text-shadow: 0 0 6px #0ff;
 }
 
-.subtitle {
-  margin-bottom: 40px;
-  font-size: 1.2em;
+.tagline {
   color: #ccc;
+  font-size: 18px;
+  margin-top: 10px;
 }
 
-.search-container {
-  position: relative;
-  max-width: 400px;
-  margin: 0 auto;
+.search-section {
+  margin: 40px auto 20px;
 }
 
-#search {
-  width: 100%;
-  padding: 12px;
-  font-size: 16px;
-  border-radius: 8px;
+#searchInput {
+  width: 60%;
+  padding: 12px 20px;
+  font-size: 18px;
   border: none;
+  border-radius: 8px;
+  outline: none;
 }
 
 .suggestions {
-  background-color: #222;
-  position: absolute;
-  width: 100%;
-  z-index: 10;
-  border-radius: 0 0 8px 8px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  margin-top: 10px;
+  color: #0ff;
 }
 
-.suggestions div {
-  padding: 10px;
-  cursor: pointer;
-}
-
-.suggestions div:hover {
-  background-color: #333;
-}
-
-#result {
+.result {
   margin-top: 30px;
 }
 
-.app-card {
+.result img {
+  width: 100px;
+  height: auto;
+  margin: 20px 0;
+}
+
+.result a {
   display: inline-block;
-  background-color: #1a1a1a;
-  border-radius: 10px;
-  padding: 20px;
-  margin: 10px;
-  box-shadow: 0 0 8px #00ffe570;
-  width: 220px;
-  text-align: center;
-}
-
-.app-card img {
-  width: 80px;
-  height: 80px;
-  object-fit: contain;
-}
-
-.app-card a {
-  display: block;
   margin-top: 10px;
-  color: #00ffe5;
+  color: #0ff;
   text-decoration: none;
+  font-size: 18px;
+  border: 1px solid #0ff;
+  padding: 8px 20px;
+  border-radius: 8px;
+  transition: 0.3s;
+}
+
+.result a:hover {
+  background-color: #0ff;
+  color: #000;
+}
+
+.features-section {
+  background-color: #1a1a1a;
+  padding: 30px 20px;
+  margin-top: 60px;
+  border-top: 1px solid #444;
+}
+
+.features-section h2 {
+  font-size: 28px;
+  color: #0ff;
+  margin-bottom: 20px;
+}
+
+.features-section ul {
+  list-style: none;
+  padding: 0;
+}
+
+.features-section li {
+  font-size: 18px;
+  margin: 10px 0;
+  color: #ccc;
 }
 
 footer {
   margin-top: 50px;
-  font-size: 0.9em;
-  color: #888;
+  padding: 20px;
+  font-size: 14px;
+  color: #666;
 }
+
