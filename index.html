@@ -1,22 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Global Payment Apps</title>
-  <link rel="stylesheet" href="styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Payment Selector</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="search-container">
-    <input type="text" id="searchInput" placeholder="Search payment apps..." />
-  </div>
 
-  <div id="appsContainer" class="apps-grid">
-    <!-- Cards will be dynamically injected by JS -->
-  </div>
+    <div class="container">
+        <h1>🌐 Choose Your Payment App</h1>
 
-  <script src="script.js"></script>
+        <input type="text" id="searchInput" placeholder="Search for a payment app...">
+        <ul id="suggestions"></ul>
+
+        <div id="recentlyUsed" class="recent-section">
+            <h3>Previously Used</h3>
+            <ul id="recentApps"></ul>
+        </div>
+
+        <div id="appDetails" class="app-details"></div>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
+
 
 
