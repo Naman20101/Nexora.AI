@@ -1,4 +1,4 @@
-function simulateTransaction(app) {
-  alert("Simulating transaction for: " + app + " (Transaction window will open soon)");
-  // We’ll build the popup in Step 2 here.
+function simulateTransaction(appName) {
+  alert("Initiating fraud detection on " + appName + " transaction...");
+  // You can trigger an API call here later if needed
 }
