@@ -1,84 +1,76 @@
-const paymentApps = {
-    "Paytm": { link: "https://paytm.com", logo: "images/paytm.png" },
-    "Google Pay": { link: "https://pay.google.com", logo: "logos/googlepay.png" },
-    "PhonePe": { link: "https://phonepe.com", logo: "logos/phonepe.png" },
-    "BHIM": { link: "https://bhimupi.org.in", logo: "logos/bhim.png" },
-    "MobiKwik": { link: "https://mobikwik.com", logo: "logos/mobikwik.png" },
-    "Freecharge": { link: "https://www.freecharge.in", logo: "logos/freecharge.png" },
-    "Amazon Pay": { link: "https://pay.amazon.in", logo: "logos/amazonpay.png" },
-    "PayPal": { link: "https://paypal.com", logo: "logos/paypal.png" },
-    "Venmo": { link: "https://venmo.com", logo: "logos/venmo.png" },
-    "Apple Pay": { link: "https://www.apple.com/apple-pay/", logo: "logos/applepay.png" },
-    "Cash App": { link: "https://cash.app", logo: "logos/cashapp.png" },
-    "Zelle": { link: "https://www.zellepay.com", logo: "logos/zelle.png" },
-    "Revolut": { link: "https://revolut.com", logo: "logos/revolut.png" },
-    "Monzo": { link: "https://monzo.com", logo: "logos/monzo.png" },
-    "Barclays Pingit": { link: "https://www.pingit.com", logo: "logos/pingit.png" },
-    "Beem It": { link: "https://www.beemit.com.au", logo: "logos/beemit.png" },
-    "Osko": { link: "https://www.osko.com.au", logo: "logos/osko.png" },
-    "CommBank app": { link: "https://www.commbank.com.au", logo: "logos/commbank.png" },
-    "NAB Pay": { link: "https://www.nab.com.au", logo: "logos/nabpay.png" },
-    "ANZ Pay": { link: "https://www.anz.com.au", logo: "logos/anzpay.png" },
-    "Alipay": { link: "https://intl.alipay.com", logo: "logos/alipay.png" },
-    "WeChat Pay": { link: "https://pay.weixin.qq.com", logo: "logos/wechatpay.png" },
-    "UnionPay": { link: "https://www.unionpayintl.com", logo: "logos/unionpay.png" },
-    "JD Pay": { link: "https://www.jd.id", logo: "logos/jdpay.png" },
-    "Tenpay": { link: "https://www.tenpay.com", logo: "logos/tenpay.png" },
-    "Stripe": { link: "https://stripe.com", logo: "logos/stripe.png" },
-    "Skrill": { link: "https://www.skrill.com", logo: "logos/skrill.png" },
-    "Wise": { link: "https://wise.com", logo: "logos/wise.png" },
-    "Neteller": { link: "https://www.neteller.com", logo: "logos/neteller.png" }
-};
+const paymentApps = [
+  { name: "Paytm", file: "paytm.png", url: "https://paytm.com" },
+  { name: "PhonePe", file: "phonepe.png", url: "https://www.phonepe.com/" },
+  { name: "Google Pay", file: "gpay.png", url: "https://pay.google.com/" },
+  { name: "PayPal", file: "paypal.png", url: "https://www.paypal.com" },
+  { name: "Venmo", file: "venmo.png", url: "https://venmo.com" },
+  { name: "Apple Pay", file: "applepay.png", url: "https://www.apple.com/apple-pay/" },
+  { name: "BHIM", file: "bhim.png", url: "https://www.bhimupi.org.in/" },
+  { name: "MobiKwik", file: "mobikwik.png", url: "https://www.mobikwik.com/" },
+  { name: "Freecharge", file: "freecharge.png", url: "https://www.freecharge.in/" },
+  { name: "Amazon Pay", file: "amazonpay.png", url: "https://www.amazon.in/amazonpay" },
+  { name: "Cash App", file: "cashapp.png", url: "https://cash.app/" },
+  { name: "Zelle", file: "zelle.png", url: "https://www.zellepay.com/" },
+  { name: "Revolut", file: "revolut.png", url: "https://www.revolut.com/" },
+  { name: "Monzo", file: "monzo.png", url: "https://monzo.com/" },
+  { name: "Pingit", file: "pingit.png", url: "https://www.barclays.co.uk/ways-to-bank/pingit/" },
+  { name: "Beem It", file: "beemit.png", url: "https://www.beemit.com.au/" },
+  { name: "Osko", file: "osko.png", url: "https://www.osko.com.au/" },
+  { name: "CommBank", file: "commbank.png", url: "https://www.commbank.com.au/digital-banking.html" },
+  { name: "NAB Pay", file: "nabpay.png", url: "https://www.nab.com.au/" },
+  { name: "ANZ Pay", file: "anzpay.png", url: "https://www.anz.com.au/personal/ways-bank/payments/anz-pay/" },
+  { name: "Alipay", file: "alipay.png", url: "https://intl.alipay.com/" },
+  { name: "WeChat Pay", file: "wechatpay.png", url: "https://pay.weixin.qq.com/" },
+  { name: "UnionPay", file: "unionpay.png", url: "https://www.unionpayintl.com/" },
+  { name: "JD Pay", file: "jdpay.png", url: "https://www.jdpay.com/" },
+  { name: "Tenpay", file: "tenpay.png", url: "https://www.tenpay.com/" },
+  { name: "Stripe", file: "stripe.png", url: "https://stripe.com/" },
+  { name: "Skrill", file: "skrill.png", url: "https://www.skrill.com/" },
+  { name: "Wise", file: "wise.png", url: "https://wise.com/" },
+  { name: "Neteller", file: "neteller.png", url: "https://www.neteller.com/" },
+];
 
 const searchInput = document.getElementById("searchInput");
-const suggestions = document.getElementById("suggestions");
-const appDetails = document.getElementById("appDetails");
-const recentAppsList = document.getElementById("recentApps");
-let recentApps = [];
+const resultsDiv = document.getElementById("results");
+const suggestionsBox = document.getElementById("suggestions");
 
-searchInput.addEventListener("input", () => {
-    const query = searchInput.value.toLowerCase();
-    suggestions.innerHTML = "";
+searchInput.addEventListener("input", function () {
+  const query = this.value.toLowerCase();
+  const filtered = paymentApps.filter(app =>
+    app.name.toLowerCase().includes(query)
+  );
 
-    if (query.length === 0) return;
+  suggestionsBox.innerHTML = "";
+  resultsDiv.innerHTML = "";
 
-    const matchedApps = Object.keys(paymentApps).filter(app =>
-        app.toLowerCase().includes(query)
-    );
-
-    matchedApps.forEach(app => {
-        const li = document.createElement("li");
-        li.textContent = app;
-        li.onclick = () => selectApp(app);
-        suggestions.appendChild(li);
+  if (query) {
+    filtered.forEach(app => {
+      const div = document.createElement("div");
+      div.textContent = app.name;
+      div.onclick = () => {
+        showResults(app.name);
+        searchInput.value = app.name;
+        suggestionsBox.innerHTML = "";
+      };
+      suggestionsBox.appendChild(div);
     });
+  }
 });
 
-function selectApp(appName) {
-    const app = paymentApps[appName];
-    appDetails.innerHTML = `
-        <img src="${app.logo}" alt="${appName}" class="payment-logo">
-        <h2>${appName}</h2>
-        <a href="${app.link}" target="_blank">Visit ${appName}</a>
-    `;
+function showResults(name) {
+  const app = paymentApps.find(app => app.name.toLowerCase() === name.toLowerCase());
+  resultsDiv.innerHTML = "";
 
-    if (!recentApps.includes(appName)) {
-        recentApps.unshift(appName);
-        if (recentApps.length > 5) recentApps.pop();
-        renderRecentApps();
-    }
+  if (app) {
+    const a = document.createElement("a");
+    a.href = app.url;
+    a.target = "_blank";
 
-    searchInput.value = "";
-    suggestions.innerHTML = "";
+    const img = document.createElement("img");
+    img.src = `images/${app.file}`;
+    img.alt = app.name;
+
+    a.appendChild(img);
+    resultsDiv.appendChild(a);
+  }
 }
-
-function renderRecentApps() {
-    recentAppsList.innerHTML = "";
-    recentApps.forEach(app => {
-        const li = document.createElement("li");
-        li.textContent = app;
-        li.onclick = () => selectApp(app);
-        recentAppsList.appendChild(li);
-    });
-}
-
