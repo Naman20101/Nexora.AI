@@ -1,68 +1,109 @@
 const apps = [
-  {
-    name: "Paytm",
-    keywords: ["india", "pay", "wallet"],
-    image: "images/paytm.png",
-    link: "https://paytm.com"
-  },
-  {
-    name: "PhonePe",
-    keywords: ["india", "phone", "upi"],
-    image: "images/phonepe.png",
-    link: "https://www.phonepe.com"
-  },
-  {
-    name: "Google Pay",
-    keywords: ["gpay", "upi", "google", "pay"],
-    image: "images/gpay.png",
-    link: "https://pay.google.com"
-  },
-  {
-    name: "PayPal",
-    keywords: ["paypal", "usa", "international", "wallet"],
-    image: "images/paypal.png",
-    link: "https://www.paypal.com"
-  },
-  // Add more apps below as we proceed
+  // India
+  { name: "Paytm", logo: "images/paytm.png", link: "https://paytm.com" },
+  { name: "PhonePe", logo: "images/phonepe.png", link: "https://www.phonepe.com/" },
+  { name: "Google Pay", logo: "images/gpay.png", link: "https://pay.google.com/" },
+  { name: "Amazon Pay", logo: "images/amazonpay.png", link: "https://pay.amazon.in" },
+  { name: "BHIM", logo: "images/bhim.png", link: "https://www.bhimupi.org.in/" },
+  { name: "MobiKwik", logo: "images/mobikwik.png", link: "https://www.mobikwik.com/" },
+  { name: "Freecharge", logo: "images/freecharge.png", link: "https://www.freecharge.in/" },
+
+  // USA
+  { name: "PayPal", logo: "images/paypal.png", link: "https://www.paypal.com" },
+  { name: "Venmo", logo: "images/venmo.png", link: "https://venmo.com" },
+  { name: "Apple Pay", logo: "images/applepay.png", link: "https://www.apple.com/apple-pay/" },
+  { name: "Cash App", logo: "images/cashapp.png", link: "https://cash.app/" },
+  { name: "Zelle", logo: "images/zelle.png", link: "https://www.zellepay.com/" },
+
+  // UK
+  { name: "Revolut", logo: "images/revolut.png", link: "https://www.revolut.com/" },
+  { name: "Monzo", logo: "images/monzo.png", link: "https://monzo.com/" },
+  { name: "Pingit", logo: "images/pingit.png", link: "https://www.barclays.co.uk/" },
+
+  // Australia
+  { name: "Beem It", logo: "images/beemit.png", link: "https://www.beemit.com.au/" },
+  { name: "Osko", logo: "images/osko.png", link: "https://payid.com.au/osko" },
+  { name: "CommBank", logo: "images/commbank.png", link: "https://www.commbank.com.au/" },
+
+  // China
+  { name: "Alipay", logo: "images/alipay.png", link: "https://intl.alipay.com/" },
+  { name: "WeChat Pay", logo: "images/wechat.png", link: "https://pay.weixin.qq.com/index.php/public/wechatpay" },
+  { name: "UnionPay", logo: "images/unionpay.png", link: "https://www.unionpayintl.com/" },
+
+  // Global
+  { name: "Stripe", logo: "images/stripe.png", link: "https://stripe.com/" },
+  { name: "Skrill", logo: "images/skrill.png", link: "https://www.skrill.com/" },
+  { name: "Wise", logo: "images/wise.png", link: "https://wise.com/" },
+  { name: "Neteller", logo: "images/neteller.png", link: "https://www.neteller.com/" },
 ];
 
-let recentSearches = [];
-
 const input = document.getElementById("searchInput");
-const resultDiv = document.getElementById("result");
-const suggestionsDiv = document.getElementById("suggestions");
+const results = document.getElementById("results");
+const suggestions = document.getElementById("suggestions");
+
+let history = [];
 
 input.addEventListener("input", () => {
-  const value = input.value.toLowerCase();
-  const matchedApps = apps.filter(app =>
-    app.name.toLowerCase().includes(value) ||
-    app.keywords.some(k => k.includes(value))
+  const keyword = input.value.toLowerCase();
+  results.innerHTML = "";
+  suggestions.innerHTML = "";
+
+  if (!keyword) return;
+
+  const filtered = apps.filter(app =>
+    app.name.toLowerCase().includes(keyword)
   );
 
-  suggestionsDiv.innerHTML = matchedApps
-    .map(app => `<div onclick="showApp('${app.name}')">${app.name}</div>`)
-    .join("");
+  if (filtered.length === 0) {
+    suggestions.innerText = "No matching apps found.";
+    return;
+  }
 
-  if (!value) {
-    suggestionsDiv.innerHTML = "";
+  filtered.forEach(app => {
+    const card = document.createElement("div");
+    card.className = "result-item";
+    card.innerHTML = `
+      <a href="${app.link}" target="_blank">
+        <img src="${app.logo}" alt="${app.name}"/>
+        <p>${app.name}</p>
+      </a>
+    `;
+    results.appendChild(card);
+  });
+
+  // Suggestions below input
+  filtered.forEach(app => {
+    const span = document.createElement("span");
+    span.innerText = app.name;
+    span.style.cursor = "pointer";
+    span.style.marginRight = "10px";
+    span.onclick = () => {
+      input.value = app.name;
+      input.dispatchEvent(new Event("input"));
+      if (!history.includes(app.name)) {
+        history.push(app.name);
+      }
+    };
+    suggestions.appendChild(span);
+  });
+
+  // Show previously used
+  if (history.length > 0) {
+    const prevHeader = document.createElement("p");
+    prevHeader.innerText = "Previously Used:";
+    prevHeader.style.marginTop = "30px";
+    suggestions.appendChild(prevHeader);
+    history.slice(-5).forEach(appName => {
+      const oldApp = apps.find(a => a.name === appName);
+      const card = document.createElement("div");
+      card.className = "result-item";
+      card.innerHTML = `
+        <a href="${oldApp.link}" target="_blank">
+          <img src="${oldApp.logo}" alt="${oldApp.name}"/>
+          <p>${oldApp.name}</p>
+        </a>
+      `;
+      results.appendChild(card);
+    });
   }
 });
-
-function showApp(appName) {
-  const app = apps.find(a => a.name === appName);
-  if (!app) return;
-
-  resultDiv.innerHTML = `
-    <h2>${app.name}</h2>
-    <img src="${app.image}" alt="${app.name} logo" />
-    <br />
-    <a href="${app.link}" target="_blank">Visit ${app.name}</a>
-  `;
-
-  if (!recentSearches.includes(app.name)) {
-    recentSearches.push(app.name);
-  }
-
-  suggestionsDiv.innerHTML = `<small>Previously Searched: ${recentSearches.join(", ")}</small>`;
-}
-
