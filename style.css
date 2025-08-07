@@ -1,61 +1,66 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
 body {
+  margin: 0;
   font-family: 'Segoe UI', sans-serif;
-  background-color: #0a0a0a;
-  color: #fff;
-  scroll-behavior: smooth;
+  background-color: #0e0e0e;
+  color: white;
 }
-.hero {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+
+header {
   text-align: center;
-  background: radial-gradient(circle, #111 0%, #000 100%);
+  padding: 40px 20px 20px;
 }
-.hero h1 {
-  font-size: 3rem;
-  color: #00ffcc;
+
+header h1 {
+  font-size: 2.8rem;
+  color: #00ffc8;
 }
-.hero p {
+
+header p {
   font-size: 1.2rem;
-  margin: 1rem 0;
+  color: #cfcfcf;
+  margin-top: 10px;
 }
-.btns .btn {
-  margin: 0.5rem;
-  padding: 0.7rem 1.5rem;
-  background-color: #00ffcc;
-  color: #000;
-  border-radius: 5px;
-  text-decoration: none;
+
+.app-section {
+  text-align: center;
+  margin-top: 40px;
 }
-.slide {
-  height: 100vh;
-  padding: 4rem;
-  background: #111;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-.dark {
-  background: #000;
-}
-.apps-grid {
+
+.apps {
   display: flex;
   justify-content: center;
-  gap: 2rem;
   flex-wrap: wrap;
-  margin-top: 2rem;
+  gap: 30px;
+  padding: 30px;
 }
-.apps-grid img {
-  width: 100px;
-  transition: transform 0.3s ease;
+
+.app-icon {
+  width: 120px;
+  height: 120px;
+  background-color: #1a1a1a;
+  border: 2px solid #333;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s, box-shadow 0.3s;
+  cursor: pointer;
 }
-.apps-grid img:hover {
-  transform: scale(1.1);
+
+.app-icon:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 20px #00ffc8;
 }
+
+.app-icon img {
+  width: 60px;
+  height: 60px;
+}
+
+.footer {
+  text-align: center;
+  padding: 40px 10px 20px;
+  font-size: 0.9rem;
+  color: #777;
+}
+
