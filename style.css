@@ -1,108 +1,90 @@
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   margin: 0;
-  background: #0a0a0a;
-  color: #f0f0f0;
+  padding: 0;
+  background-color: #111;
+  font-family: 'Segoe UI', sans-serif;
+  color: white;
   text-align: center;
 }
 
-header {
-  padding: 2rem;
+.container {
+  padding: 50px 20px;
 }
 
-.neon-text {
-  font-size: 3rem;
-  color: #00f7ff;
-  text-shadow: 0 0 10px #00f7ff, 0 0 20px #00f7ff, 0 0 30px #00f7ff;
+.brand-name {
+  font-size: 2.5em;
+  color: #00ffe5;
+  text-shadow: 0 0 10px #00ffe5;
 }
 
-.tagline {
-  font-size: 1.2rem;
+.subtitle {
+  margin-bottom: 40px;
+  font-size: 1.2em;
   color: #ccc;
 }
 
-.search-section {
-  margin: 2rem auto;
-  width: 90%;
-  max-width: 600px;
+.search-container {
+  position: relative;
+  max-width: 400px;
+  margin: 0 auto;
 }
 
-#searchInput {
+#search {
   width: 100%;
-  padding: 1rem;
-  font-size: 1rem;
+  padding: 12px;
+  font-size: 16px;
   border-radius: 8px;
   border: none;
 }
 
-.suggestions-box {
-  margin-top: 0.5rem;
-  background: #222;
-  border-radius: 8px;
-  max-height: 200px;
-  overflow-y: auto;
+.suggestions {
+  background-color: #222;
+  position: absolute;
+  width: 100%;
+  z-index: 10;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }
 
-.suggestions-box div {
-  padding: 0.75rem;
+.suggestions div {
+  padding: 10px;
   cursor: pointer;
-  border-bottom: 1px solid #444;
 }
 
-.suggestions-box div:hover {
-  background: #333;
+.suggestions div:hover {
+  background-color: #333;
 }
 
-.results-grid {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 2rem;
-  padding: 2rem;
+#result {
+  margin-top: 30px;
 }
 
-.results-grid a {
-  text-decoration: none;
-  color: inherit;
+.app-card {
+  display: inline-block;
+  background-color: #1a1a1a;
+  border-radius: 10px;
+  padding: 20px;
+  margin: 10px;
+  box-shadow: 0 0 8px #00ffe570;
+  width: 220px;
+  text-align: center;
 }
 
-.results-grid img {
-  width: 100px;
-  height: 100px;
+.app-card img {
+  width: 80px;
+  height: 80px;
   object-fit: contain;
-  border-radius: 12px;
-  transition: transform 0.3s ease;
 }
 
-.results-grid img:hover {
-  transform: scale(1.1);
-}
-
-.features {
-  background-color: #111;
-  border: 2px solid #00f7ff;
-  border-radius: 15px;
-  padding: 2rem;
-  margin: 2rem auto;
-  max-width: 700px;
-}
-
-.features h2 {
-  color: #00f7ff;
-}
-
-.features ul {
-  list-style: none;
-  padding: 0;
-}
-
-.features li {
-  margin: 0.5rem 0;
-  font-size: 1rem;
+.app-card a {
+  display: block;
+  margin-top: 10px;
+  color: #00ffe5;
+  text-decoration: none;
 }
 
 footer {
-  padding: 2rem;
-  font-size: 0.9rem;
-  color: #aaa;
+  margin-top: 50px;
+  font-size: 0.9em;
+  color: #888;
 }
