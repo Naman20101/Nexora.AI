@@ -7,85 +7,45 @@
     body {
       text-align: center;
       font-family: Arial, sans-serif;
-      background-color: #ffffff;
+      background-color: white;
     }
-
     h1 {
-      margin-top: 30px;
       font-size: 2em;
     }
-
-    .app-section {
-      margin-top: 40px;
+    .payment-options {
+      margin-top: 30px;
     }
-
-    .apps {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 30px;
-      margin-top: 20px;
-    }
-
-    .app-icon {
+    .payment-options a img {
       width: 100px;
-      height: 100px;
+      height: auto;
+      margin: 20px;
       cursor: pointer;
-      transition: transform 0.2s ease;
     }
-
-    .app-icon:hover {
-      transform: scale(1.1);
-    }
-
-    .app-icon img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-
-    .footer {
-      margin-top: 60px;
-      font-size: 14px;
-      color: #888;
+    footer {
+      margin-top: 50px;
+      font-size: 0.9em;
+      color: gray;
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <h1>Nexora.ai (A.P.F.D.S)</h1>
-    <p>AI-Powered Fraud Detection for Digital Payments</p>
-  </header>
+  <h1><strong>Nexora.ai (A.P.F.D.S)</strong></h1>
+  <p>AI-Powered Fraud Detection for Digital Payments</p>
 
-  <section class="app-section">
-    <h2>Choose a Payment App</h2>
-    <div class="apps">
-      <div class="app-icon" onclick="simulateTransaction('Paytm')">
-        <img src="https://companieslogo.com/img/orig/PAYTM.NS-7b9b69d9.png?t=1633513551" alt="Paytm">
-      </div>
-      <div class="app-icon" onclick="simulateTransaction('Google Pay')">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Google_Pay_logo.svg/2560px-Google_Pay_logo.svg.png" alt="Google Pay">
-      </div>
-      <div class="app-icon" onclick="simulateTransaction('PhonePe')">
-        <img src="https://seeklogo.com/images/P/phonepe-logo-0B4A52D65E-seeklogo.com.png" alt="PhonePe">
-      </div>
-      <div class="app-icon" onclick="simulateTransaction('PayPal')">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal">
-      </div>
-    </div>
-  </section>
+  <h2>Choose a Payment App</h2>
 
-  <div class="footer">
-    Developed by Naman Reddy • Nexora.ai
+  <div class="payment-options">
+    <a href="#"><img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Paytm_logo.png" alt="Paytm"></a>
+    <a href="#"><img src="https://upload.wikimedia.org/wikipedia/commons/5/5b/Google_Pay_Logo.svg" alt="Google Pay"></a>
+    <a href="#"><img src="https://upload.wikimedia.org/wikipedia/commons/f/f0/PhonePe_Logo.svg" alt="PhonePe"></a>
+    <a href="#"><img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal"></a>
   </div>
 
-  <script>
-    function simulateTransaction(appName) {
-      alert(`Launching fraud check for ${appName}...`);
-      // Later this can actually send data to your FastAPI backend
-    }
-  </script>
+  <footer>
+    Developed by Naman Reddy • Nexora.ai
+  </footer>
+
 </body>
 </html>
 
