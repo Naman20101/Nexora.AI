@@ -1,29 +1,19 @@
 body {
+  font-family: Arial, sans-serif;
+  text-align: center;
   margin: 0;
-  font-family: 'Segoe UI', sans-serif;
-  background-color: #0e0e0e;
-  color: white;
+  padding: 0;
+  background-color: #f4f4f4;
 }
 
 header {
-  text-align: center;
-  padding: 40px 20px 20px;
-}
-
-header h1 {
-  font-size: 2.8rem;
-  color: #00ffc8;
-}
-
-header p {
-  font-size: 1.2rem;
-  color: #cfcfcf;
-  margin-top: 10px;
+  background-color: #111;
+  color: white;
+  padding: 20px 0;
 }
 
 .app-section {
-  text-align: center;
-  margin-top: 40px;
+  padding: 40px 20px;
 }
 
 .apps {
@@ -31,36 +21,35 @@ header p {
   justify-content: center;
   flex-wrap: wrap;
   gap: 30px;
-  padding: 30px;
+  margin-top: 20px;
 }
 
 .app-icon {
   width: 120px;
   height: 120px;
-  background-color: #1a1a1a;
-  border: 2px solid #333;
-  border-radius: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.3s, box-shadow 0.3s;
+  border-radius: 12px;
+  background-color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 10px;
   cursor: pointer;
-}
-
-.app-icon:hover {
-  transform: scale(1.08);
-  box-shadow: 0 0 20px #00ffc8;
+  transition: transform 0.2s, box-shadow 0.3s;
 }
 
 .app-icon img {
-  width: 60px;
-  height: 60px;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.app-icon:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .footer {
-  text-align: center;
-  padding: 40px 10px 20px;
-  font-size: 0.9rem;
-  color: #777;
+  margin-top: 60px;
+  padding: 20px;
+  background-color: #111;
+  color: white;
 }
 
