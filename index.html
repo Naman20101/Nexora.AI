@@ -1,85 +1,32 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Nexora.ai – AI-Powered Fraud Detection</title>
-  <script defer src="script.js"></script>
-  <style>
-    body {
-      background-color: #111;
-      color: #fff;
-      font-family: 'Segoe UI', sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px;
-    }
-
-    h1 {
-      color: #00ffcc;
-    }
-
-    form {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 15px;
-      width: 60%;
-    }
-
-    label {
-      display: flex;
-      flex-direction: column;
-      font-size: 14px;
-    }
-
-    input {
-      padding: 8px;
-      border-radius: 5px;
-      border: none;
-      background-color: #222;
-      color: #fff;
-    }
-
-    button {
-      grid-column: span 2;
-      padding: 12px;
-      margin-top: 20px;
-      background-color: #00ffcc;
-      color: #000;
-      font-weight: bold;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    #result {
-      margin-top: 30px;
-      font-size: 20px;
-      font-weight: bold;
-      color: #00ffcc;
-    }
-  </style>
-</head>
 <body>
-  <h1>Nexora.ai – AI-Powered Fraud Detection</h1>
+  <header>
+    <h1>Nexora.ai (A.P.F.D.S)</h1>
+    <p>AI-Powered Fraud Detection for Digital Payments</p>
+  </header>
 
-  <form id="fraudForm">
-    <!-- Generate V1 to V28 + Amount -->
-    <!-- We'll insert all 29 fields below -->
-    <script>
-      const fields = [];
-      for (let i = 1; i <= 28; i++) {
-        fields.push(`<label>V${i}:<input type="number" name="V${i}" required></label>`);
-      }
-      fields.push(`<label>Amount:<input type="number" name="Amount" required></label>`);
-      document.write(fields.join(''));
-    </script>
+  <section class="app-section">
+    <h2>Choose a Payment App</h2>
+    <div class="apps">
+      <div class="app-icon" onclick="simulateTransaction('Paytm')">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Paytm_logo.png" alt="Paytm">
+      </div>
+      <div class="app-icon" onclick="simulateTransaction('Google Pay')">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Google_Pay_logo.svg" alt="Google Pay">
+      </div>
+      <div class="app-icon" onclick="simulateTransaction('PhonePe')">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/f/f4/PhonePe_Logo.svg" alt="PhonePe">
+      </div>
+      <div class="app-icon" onclick="simulateTransaction('PayPal')">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal">
+      </div>
+    </div>
+  </section>
 
-    <button type="submit">Detect Fraud</button>
-  </form>
+  <div class="footer">
+    Developed by Naman Reddy • Nexora.ai
+  </div>
 
-  <div id="result"></div>
+  <script src="index.js"></script>
 </body>
-</html>
 
 
