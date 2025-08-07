@@ -53,3 +53,15 @@ header {
   color: white;
 }
 
+.payment-options img {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  margin: 20px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.payment-options img:hover {
+  transform: scale(1.1);
+}
