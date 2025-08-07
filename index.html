@@ -3,28 +3,36 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Nexora.ai - Fraud Detection</title>
+  <title>Nexora.ai - Global Payment App Search</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-  <div class="intro">
+  <header>
     <h1>Nexora.ai</h1>
-    <p>Advanced AI-Powered Fraud Detection System</p>
-  </div>
+    <p class="tagline">AI-Powered Payment Finder – Built by Naman Reddy</p>
+  </header>
 
-  <div class="search-section">
-    <input type="text" id="searchInput" placeholder="Search for a payment app..." oninput="searchApps()" />
-    <div id="suggestions"></div>
-  </div>
+  <main>
+    <section class="search-section">
+      <input type="text" id="searchInput" placeholder="Search for a payment app..." />
+      <div id="suggestions"></div>
+    </section>
 
-  <h2>Previously Used Apps</h2>
-  <div id="recentlyUsed" class="app-container"></div>
+    <section id="results" class="results-section"></section>
 
-  <h2>Search Results</h2>
-  <div id="appResults" class="app-container"></div>
+    <section class="features">
+      <h2>⚡ Features of Nexora.ai</h2>
+      <ul>
+        <li>🔍 Smart Payment App Search</li>
+        <li>🧠 AI Suggestions Based on Keywords</li>
+        <li>🔗 Direct Official Website Links</li>
+        <li>🕘 Recently Visited App Memory</li>
+      </ul>
+    </section>
+  </main>
 
   <footer>
-    <p>Developed by <strong>Naman Reddy</strong> | Powered by Nexora.ai</p>
+    <p>© 2025 Nexora.ai – All rights reserved.</p>
   </footer>
 
   <script src="script.js"></script>
