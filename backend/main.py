@@ -1,3 +1,4 @@
+from url_checks import detect_typosquatting
 from fastapi import FastAPI
 from pydantic import BaseModel, HttpUrl
 import joblib
