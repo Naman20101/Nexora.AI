@@ -28,4 +28,12 @@ def predict(data: TransactionData):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Prediction failed: {str(e)}")
 
+from fastapi import FastAPI
+from safe_check import router as safe_check_router  # ✅ Add this
 
+app = FastAPI()
+
+# Include the safe link checker route
+app.include_router(safe_check_router)  # ✅ Add this line
+
+# (Other routes if you already have them)
