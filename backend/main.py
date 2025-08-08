@@ -1,13 +1,4 @@
 from fastapi.middleware.cors import CORSMiddleware
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-from url_checks import detect_typosquatting
 from fastapi import FastAPI
 from pydantic import BaseModel, HttpUrl
 import joblib
@@ -19,20 +10,33 @@ import whois
 from datetime import datetime
 from urllib.parse import urlparse
 
+# Custom fraud check imports
+from url_checks import detect_typosquatting, detect_homograph, uses_ip_address, is_shortened_url
+
 app = FastAPI(
     title="Nexora.ai Fraud Detection API",
     description="Detects fraud via transaction data or suspicious URLs",
     version="2.0.0"
 )
 
-# Load your ML model
+# Enable CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Load trained model
 model = joblib.load("fraud_model.pkl")
 
 # ----------- MODELS -----------
+
 class PredictionInput(BaseModel):
     feature1: float
     feature2: float
-    # Add other features here...
+    # Add more features if necessary
 
 class URLInput(BaseModel):
     url: HttpUrl
@@ -53,14 +57,14 @@ def predict(data: PredictionInput):
 def check_url(data: URLInput):
     url = str(data.url)
 
-    # Step 1: Keyword detection
+    # Step 1: Keyword Detection
     suspicious_keywords = [
         "login", "verify", "account", "secure", "update", "banking",
         "paypal-security", "free-gift", "prize", "win", "alert"
     ]
     keyword_flag = any(word in url.lower() for word in suspicious_keywords)
 
-    # Step 2: Domain info
+    # Step 2: Domain Info
     domain_info = tldextract.extract(url)
     domain_name = f"{domain_info.domain}.{domain_info.suffix}"
 
@@ -75,7 +79,7 @@ def check_url(data: URLInput):
 
     domain_age_flag = domain_age_days is not None and domain_age_days < 180
 
-    # Step 3: HTML content scan
+    # Step 3: HTML Content Scan
     html_flag = False
     try:
         response = requests.get(url, timeout=5)
@@ -85,15 +89,12 @@ def check_url(data: URLInput):
     except Exception:
         html_flag = False
 
-    # Step 4: Advanced AI-like checks from url_checks
-    from url_checks import detect_typosquatting, detect_homograph, uses_ip_address, is_shortened_url
-
+    # Step 4: Advanced ML/AI-style URL checks (modular logic)
     typosquatting_flag = detect_typosquatting(url)
     homograph_flag = detect_homograph(url)
     ip_flag = uses_ip_address(url)
     shortened_flag = is_shortened_url(url)
 
-    # Final decision
     is_scam = any([
         keyword_flag, domain_age_flag, html_flag,
         typosquatting_flag, homograph_flag, ip_flag, shortened_flag
