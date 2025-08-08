@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, Body
 
 router = APIRouter()
 
-API_KEY = "YOUR_GOOGLE_SAFE_BROWSING_API_KEY"  # Replace with your real key
+API_KEY = AIzaSyBW9B8wnyemMVfkvdceDg9NQ3HXO1KX_u0  # Replace with your real key
 
 @router.post("/check-url")
 def check_url(url: str = Body(...)):
@@ -37,3 +37,8 @@ def check_url(url: str = Body(...)):
         return {"status": "unsafe", "details": result["matches"]}
     else:
         return {"status": "safe"}
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+API_KEY = os.getenv(AIzaSyBW9B8wnyemMVfkvdceDg9NQ3HXO1KX_u0)
