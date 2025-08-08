@@ -1,150 +1,98 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from fastapi import FastAPI
+from pydantic import BaseModel, HttpUrl
 import joblib
-import numpy as np
-
-app = FastAPI()
-
-# Define input schema
-class TransactionData(BaseModel):
-    features: list  # Expecting a list of 30 numeric features
-
-# Load model
-try:
-    model = joblib.load("fraud_model.pkl")
-except Exception as e:
-    raise RuntimeError(f"❌ Model loading failed: {e}")
-
-@app.get("/")
-def read_root():
-    return {"message": "✅ Fraud Detection API is running!"}
-
-@app.post("/predict")
-def predict(data: TransactionData):
-    try:
-        input_data = np.array(data.features).reshape(1, -1)
-        prediction = model.predict(input_data)[0]
-        return {"prediction": int(prediction)}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Prediction failed: {str(e)}")
-
-from fastapi import FastAPI
-from safe_check import router as safe_check_router  # ✅ Add this
-
-app = FastAPI()
-
-# Include the safe link checker route
-app.include_router(safe_check_router)  # ✅ Add this line
-
-# (Other routes if you already have them)
-from pydantic import BaseModel
+import uvicorn
 import requests
+from bs4 import BeautifulSoup
+import tldextract
+import whois
+from datetime import datetime
+from urllib.parse import urlparse
 
-# Model to receive the URL
-class URLCheckRequest(BaseModel):
-    url: str
+app = FastAPI(
+    title="Nexora.ai Fraud Detection API",
+    description="Detects fraud via transaction data or suspicious URLs",
+    version="2.0.0"
+)
 
-# Function to check for scam indicators
-def is_scam_url(url: str) -> bool:
-    suspicious_keywords = [
-        "free", "gift", "claim", "verify", "login", "update", "secure",
-        "account", "pay", "wallet", "bank", "click", "offer", "win", "bonus"
-    ]
-    try:
-        response = requests.get(url, timeout=5)
-        content = response.text.lower()
-        for keyword in suspicious_keywords:
-            if keyword in content:
-                return True
-        return False
-    except Exception:
-        # If the URL can't be reached or fails, treat it as suspicious
-        return True
+# Load your ML model
+model = joblib.load("model.pkl")
 
-# API endpoint for URL checking
-@app.post("/check-url")
-def check_url(data: URLCheckRequest):
-    url = data.url
-    scam = is_scam_url(url)
-    return {
-        "url": url,
-        "is_scam": scam,
-        "message": "Scam detected!" if scam else "URL seems safe."
-    }
-from fastapi import FastAPI
-from pydantic import BaseModel
-import requests
-
-app = FastAPI()
-
-# Just a test root endpoint
-@app.get("/")
-def read_root():
-    return {"message": "Hello from Nexora backend"}
-
-# Prediction endpoint
+# ----------- MODELS -----------
 class PredictionInput(BaseModel):
-    V1: float
-    V2: float
-    V3: float
-    V4: float
-    V5: float
-    V6: float
-    V7: float
-    V8: float
-    V9: float
-    V10: float
-    V11: float
-    V12: float
-    V13: float
-    V14: float
-    V15: float
-    V16: float
-    V17: float
-    V18: float
-    V19: float
-    V20: float
-    V21: float
-    V22: float
-    V23: float
-    V24: float
-    V25: float
-    V26: float
-    V27: float
-    V28: float
-    Amount: float
+    feature1: float
+    feature2: float
+    # Add other features here...
+
+class URLInput(BaseModel):
+    url: HttpUrl
+
+# ----------- ROUTES -----------
+
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to Nexora.ai Fraud Detection API"}
 
 @app.post("/predict")
 def predict(data: PredictionInput):
-    # Dummy response just for this example
-    return {"prediction": "Legit or Fraud"}
-
-# ✅ ADD THIS SECTION BELOW
-
-class URLCheckRequest(BaseModel):
-    url: str
-
-def is_scam_url(url: str) -> bool:
-    suspicious_keywords = [
-        "free", "gift", "claim", "verify", "login", "update", "secure",
-        "account", "pay", "wallet", "bank", "click", "offer", "win", "bonus"
-    ]
-    try:
-        response = requests.get(url, timeout=5)
-        content = response.text.lower()
-        for keyword in suspicious_keywords:
-            if keyword in content:
-                return True
-        return False
-    except Exception:
-        return True
+    features = [[data.feature1, data.feature2]]
+    prediction = model.predict(features)[0]
+    return {"fraud_prediction": int(prediction)}
 
 @app.post("/check-url")
-def check_url(data: URLCheckRequest):
-    url = data.url
-    scam = is_scam_url(url)
+def check_url(data: URLInput):
+    url = str(data.url)
+
+    # Step 1: Basic keyword detection
+    suspicious_keywords = [
+        "login", "verify", "account", "secure", "update", "banking",
+        "paypal-security", "free-gift", "prize", "win", "alert"
+    ]
+    keyword_flag = any(word in url.lower() for word in suspicious_keywords)
+
+    # Step 2: Domain info
+    domain_info = tldextract.extract(url)
+    domain_name = f"{domain_info.domain}.{domain_info.suffix}"
+
+    try:
+        w = whois.whois(domain_name)
+        creation_date = w.creation_date
+        if isinstance(creation_date, list):  # Some domains return list of dates
+            creation_date = creation_date[0]
+        domain_age_days = (datetime.now() - creation_date).days if creation_date else None
+    except Exception:
+        domain_age_days = None
+
+    domain_age_flag = domain_age_days is not None and domain_age_days < 180  # less than 6 months old
+
+    # Step 3: HTML content scan
+    html_flag = False
+    try:
+        response = requests.get(url, timeout=5)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        # Look for suspicious form fields
+        if soup.find_all("input", {"type": "password"}):
+            html_flag = True
+        if soup.find_all("iframe"):
+            html_flag = True
+    except Exception:
+        html_flag = False
+
+    # Step 4: Final decision
+    is_scam = keyword_flag or domain_age_flag or html_flag
+
     return {
         "url": url,
-        "is_scam": scam,
-        "message": "Scam detected!" if scam else "URL seems safe."
+        "is_scam": is_scam,
+        "flags_triggered": {
+            "keyword_flag": keyword_flag,
+            "domain_age_days": domain_age_days,
+            "domain_age_flag": domain_age_flag,
+            "html_flag": html_flag
+        },
+        "message": "⚠️ This link may be fraudulent!" if is_scam else "✅ URL seems safe."
     }
+
+# Run locally
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
