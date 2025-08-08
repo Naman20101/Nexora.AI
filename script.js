@@ -107,3 +107,29 @@ input.addEventListener("input", () => {
     });
   }
 });
+async function checkForScam() {
+  const input = document.getElementById("urlInput").value.trim();
+  const resultBox = document.getElementById("urlResult");
+  resultBox.innerHTML = "Checking... 🔍";
+
+  try {
+    const response = await fetch("http://localhost:8000/check-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: input }),
+    });
+
+    const result = await response.json();
+
+    if (result.is_scam) {
+      resultBox.innerHTML = `⚠️ <b>Warning:</b> This URL may be fraudulent!<br><br><pre>${JSON.stringify(result.flags_triggered, null, 2)}</pre>`;
+      resultBox.style.color = "#ff4444";
+    } else {
+      resultBox.innerHTML = `✅ This URL looks safe.<br><br><pre>${JSON.stringify(result.flags_triggered, null, 2)}</pre>`;
+      resultBox.style.color = "#00ff99";
+    }
+  } catch (err) {
+    resultBox.innerHTML = "❌ Error checking the URL. Make sure your backend is running.";
+    resultBox.style.color = "#ff9900";
+  }
+}
