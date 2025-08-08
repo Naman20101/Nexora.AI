@@ -44,7 +44,7 @@ def predict(data: PredictionInput):
 def check_url(data: URLInput):
     url = str(data.url)
 
-    # Step 1: Basic keyword detection
+    # Step 1: Keyword detection
     suspicious_keywords = [
         "login", "verify", "account", "secure", "update", "banking",
         "paypal-security", "free-gift", "prize", "win", "alert"
@@ -58,29 +58,37 @@ def check_url(data: URLInput):
     try:
         w = whois.whois(domain_name)
         creation_date = w.creation_date
-        if isinstance(creation_date, list):  # Some domains return list of dates
+        if isinstance(creation_date, list):
             creation_date = creation_date[0]
         domain_age_days = (datetime.now() - creation_date).days if creation_date else None
     except Exception:
         domain_age_days = None
 
-    domain_age_flag = domain_age_days is not None and domain_age_days < 180  # less than 6 months old
+    domain_age_flag = domain_age_days is not None and domain_age_days < 180
 
     # Step 3: HTML content scan
     html_flag = False
     try:
         response = requests.get(url, timeout=5)
         soup = BeautifulSoup(response.text, 'html.parser')
-        # Look for suspicious form fields
-        if soup.find_all("input", {"type": "password"}):
-            html_flag = True
-        if soup.find_all("iframe"):
+        if soup.find_all("input", {"type": "password"}) or soup.find_all("iframe"):
             html_flag = True
     except Exception:
         html_flag = False
 
-    # Step 4: Final decision
-    is_scam = keyword_flag or domain_age_flag or html_flag
+    # Step 4: Advanced AI-like checks from url_checks
+    from url_checks import detect_typosquatting, detect_homograph, uses_ip_address, is_shortened_url
+
+    typosquatting_flag = detect_typosquatting(url)
+    homograph_flag = detect_homograph(url)
+    ip_flag = uses_ip_address(url)
+    shortened_flag = is_shortened_url(url)
+
+    # Final decision
+    is_scam = any([
+        keyword_flag, domain_age_flag, html_flag,
+        typosquatting_flag, homograph_flag, ip_flag, shortened_flag
+    ])
 
     return {
         "url": url,
@@ -89,11 +97,11 @@ def check_url(data: URLInput):
             "keyword_flag": keyword_flag,
             "domain_age_days": domain_age_days,
             "domain_age_flag": domain_age_flag,
-            "html_flag": html_flag
+            "html_flag": html_flag,
+            "typosquatting_flag": typosquatting_flag,
+            "homograph_flag": homograph_flag,
+            "ip_flag": ip_flag,
+            "shortened_url_flag": shortened_flag
         },
         "message": "⚠️ This link may be fraudulent!" if is_scam else "✅ URL seems safe."
     }
-
-# Run locally
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
