@@ -37,3 +37,37 @@ app = FastAPI()
 app.include_router(safe_check_router)  # ✅ Add this line
 
 # (Other routes if you already have them)
+from pydantic import BaseModel
+import requests
+
+# Model to receive the URL
+class URLCheckRequest(BaseModel):
+    url: str
+
+# Function to check for scam indicators
+def is_scam_url(url: str) -> bool:
+    suspicious_keywords = [
+        "free", "gift", "claim", "verify", "login", "update", "secure",
+        "account", "pay", "wallet", "bank", "click", "offer", "win", "bonus"
+    ]
+    try:
+        response = requests.get(url, timeout=5)
+        content = response.text.lower()
+        for keyword in suspicious_keywords:
+            if keyword in content:
+                return True
+        return False
+    except Exception:
+        # If the URL can't be reached or fails, treat it as suspicious
+        return True
+
+# API endpoint for URL checking
+@app.post("/check-url")
+def check_url(data: URLCheckRequest):
+    url = data.url
+    scam = is_scam_url(url)
+    return {
+        "url": url,
+        "is_scam": scam,
+        "message": "Scam detected!" if scam else "URL seems safe."
+    }
