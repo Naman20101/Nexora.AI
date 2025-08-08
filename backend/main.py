@@ -16,7 +16,7 @@ app = FastAPI(
 )
 
 # Load your ML model
-model = joblib.load("model.pkl")
+model = joblib.load("fraud_model.pkl")
 
 # ----------- MODELS -----------
 class PredictionInput(BaseModel):
