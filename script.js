@@ -133,3 +133,35 @@ async function checkForScam() {
     resultBox.style.color = "#ff9900";
   }
 }
+async function checkScam() {
+  const input = document.getElementById('scamInput').value;
+  const resultElement = document.getElementById('scamResult');
+
+  if (!input.trim()) {
+    resultElement.textContent = "Please paste a link or message to check.";
+    resultElement.style.color = "orange";
+    return;
+  }
+
+  try {
+    const response = await fetch('https://your-fastapi-url.com/check-scam', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: input })
+    });
+
+    const data = await response.json();
+
+    if (data.is_fraud) {
+      resultElement.textContent = "⚠️ This seems to be a scam!";
+      resultElement.style.color = "red";
+    } else {
+      resultElement.textContent = "✅ Safe! This doesn't appear to be a scam.";
+      resultElement.style.color = "lightgreen";
+    }
+  } catch (err) {
+    resultElement.textContent = "Error checking the link. Please try again.";
+    resultElement.style.color = "orange";
+    console.error(err);
+  }
+}
