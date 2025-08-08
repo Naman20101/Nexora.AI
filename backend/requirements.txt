@@ -2,9 +2,13 @@ fastapi
 uvicorn
 scikit-learn==1.5.2
 joblib
-numpy
 requests
 python-dotenv
+pandas
+numpy
+python-whois
+beautifulsoup4
+tldextract
 
 
 
