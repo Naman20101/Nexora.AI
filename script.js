@@ -143,8 +143,7 @@ async function checkScam() {
     return;
   }
 
-  try {
-    const response = await fetch('https://your-fastapi-url.com/check-scam', {
+  try {'https://nexora-ai-a-al-f-d-s-advanced-ai-powered.onrender.com', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url: input })
