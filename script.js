@@ -1,4 +1,4 @@
-const BACKEND = "https://nexora-ai-a-al-f-d-s-advanced-ai-powered.onrender.com";
+const BACKEND = "https://nexora-ai-a-al-f-d-s-advanced-ai-powered.onrender.com/check_fraud";
 
 async function postJSON(path, body) {
   const res = await fetch(BACKEND + path, {
