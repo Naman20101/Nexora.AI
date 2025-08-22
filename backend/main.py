@@ -1,3 +1,19 @@
+# main.py (top)
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+import logging
+
+app = FastAPI(...)
+
+# Enable CORS for your frontend(s).
+# Replace ["*"] with your actual frontend origin in production (e.g. ["https://your-frontend.vercel.app"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # use specific origins for production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 from pydantic import BaseModel, HttpUrl
