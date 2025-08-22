@@ -1,4 +1,4 @@
-const BACKEND = "https://nexora-ai-a-al-f-d-s-advanced-ai-powered.onrender.com/check-url";
+const BACKEND = "https://nexora-ai-a-al-f-d-s-advanced-ai-powered.onrender.com";
 
 async function postJSON(path, body) {
   const res = await fetch(BACKEND + path, {
@@ -7,7 +7,6 @@ async function postJSON(path, body) {
     body: JSON.stringify(body)
   });
   if (!res.ok) {
-    // try to get json error or plain text
     let errBody;
     try { errBody = await res.json(); } catch (e) { errBody = await res.text(); }
     throw new Error(`Status ${res.status}: ${JSON.stringify(errBody)}`);
@@ -15,7 +14,6 @@ async function postJSON(path, body) {
   return await res.json();
 }
 
-// Example usage for check-url:
 document.getElementById("checkBtn").addEventListener("click", async () => {
   try {
     const url = document.getElementById("urlInput").value;
