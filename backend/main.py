@@ -1,133 +1,65 @@
-# main.py (top)
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+# main.py
 import logging
-
-app = FastAPI(...)
-
-# Enable CORS for your frontend(s).
-# Replace ["*"] with your actual frontend origin in production (e.g. ["https://your-frontend.vercel.app"])
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # use specific origins for production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI
 from pydantic import BaseModel, HttpUrl
 import joblib
-import uvicorn
-import requests
-from bs4 import BeautifulSoup
-import tldextract
-import whois
-from datetime import datetime
-from urllib.parse import urlparse
+from typing import Optional
 
-# Custom fraud check imports
-from url_checks import detect_typosquatting, detect_homograph, uses_ip_address, is_shortened_url
+logging.basicConfig(level=logging.INFO)
 
-app = FastAPI(
-    title="Nexora.ai Fraud Detection API",
-    description="Detects fraud via transaction data or suspicious URLs",
-    version="2.0.0"
-)
+app = FastAPI(title="Nexora.ai Fraud Detection API")
 
-# Enable CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # change to your frontend origin in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Load trained model
-model = joblib.load("fraud_model.pkl")
-
-# ----------- MODELS -----------
-
-class PredictionInput(BaseModel):
-    feature1: float
-    feature2: float
-    # Add more features if necessary
+# Try to load model safely
+MODEL_PATH = "fraud_model.pkl"
+model = None
+try:
+    model = joblib.load(MODEL_PATH)
+    logging.info("Model loaded")
+except Exception as e:
+    logging.exception("Model load failed; continuing without model")
 
 class URLInput(BaseModel):
     url: HttpUrl
 
-# ----------- ROUTES -----------
+class SmallPredict(BaseModel):
+    feature1: float
+    feature2: float
+    feature3: float
 
 @app.get("/")
-def read_root():
-    return {"message": "Welcome to Nexora.ai Fraud Detection API"}
-
-@app.post("/predict")
-def predict(data: PredictionInput):
-    features = [[data.feature1, data.feature2]]
-    prediction = model.predict(features)[0]
-    return {"fraud_prediction": int(prediction)}
+def root():
+    return {"message": "Nexora.ai API live"}
 
 @app.post("/check-url")
 def check_url(data: URLInput):
-    url = str(data.url)
-
-    # Step 1: Keyword Detection
-    suspicious_keywords = [
-        "login", "verify", "account", "secure", "update", "banking",
-        "paypal-security", "free-gift", "prize", "win", "alert"
-    ]
-    keyword_flag = any(word in url.lower() for word in suspicious_keywords)
-
-    # Step 2: Domain Info
-    domain_info = tldextract.extract(url)
-    domain_name = f"{domain_info.domain}.{domain_info.suffix}"
-
     try:
-        w = whois.whois(domain_name)
-        creation_date = w.creation_date
-        if isinstance(creation_date, list):
-            creation_date = creation_date[0]
-        domain_age_days = (datetime.now() - creation_date).days if creation_date else None
-    except Exception:
-        domain_age_days = None
+        url = str(data.url)
+        # (your check logic here)
+        result = {"url": url, "is_scam": False, "message": "OK"}
+        return result
+    except Exception as e:
+        logging.exception("check-url failed")
+        raise HTTPException(status_code=500, detail="Internal error")
 
-    domain_age_flag = domain_age_days is not None and domain_age_days < 180
-
-    # Step 3: HTML Content Scan
-    html_flag = False
+@app.post("/predict")
+def predict(data: SmallPredict):
     try:
-        response = requests.get(url, timeout=5)
-        soup = BeautifulSoup(response.text, 'html.parser')
-        if soup.find_all("input", {"type": "password"}) or soup.find_all("iframe"):
-            html_flag = True
-    except Exception:
-        html_flag = False
-
-    # Step 4: Advanced ML/AI-style URL checks (modular logic)
-    typosquatting_flag = detect_typosquatting(url)
-    homograph_flag = detect_homograph(url)
-    ip_flag = uses_ip_address(url)
-    shortened_flag = is_shortened_url(url)
-
-    is_scam = any([
-        keyword_flag, domain_age_flag, html_flag,
-        typosquatting_flag, homograph_flag, ip_flag, shortened_flag
-    ])
-
-    return {
-        "url": url,
-        "is_scam": is_scam,
-        "flags_triggered": {
-            "keyword_flag": keyword_flag,
-            "domain_age_days": domain_age_days,
-            "domain_age_flag": domain_age_flag,
-            "html_flag": html_flag,
-            "typosquatting_flag": typosquatting_flag,
-            "homograph_flag": homograph_flag,
-            "ip_flag": ip_flag,
-            "shortened_url_flag": shortened_flag
-        },
-        "message": "⚠️ This link may be fraudulent!" if is_scam else "✅ URL seems safe."
-    }
+        if model is None:
+            raise HTTPException(status_code=503, detail="Model not loaded")
+        X = [[data.feature1, data.feature2, data.feature3]]
+        pred = int(model.predict(X)[0])
+        return {"prediction": pred, "result": "Fraud" if pred == 1 else "Legit"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.exception("predict failed")
+        raise HTTPException(status_code=500, detail=str(e))
