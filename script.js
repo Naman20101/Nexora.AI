@@ -25,7 +25,16 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             const response = await postJSON("/check-url", { url });
             console.log("OK", response);
-            alert("URL Check: " + JSON.stringify(response));
+            
+            let message = `URL: ${response.url}\n`;
+            message += `Final Verdict: ${response.is_scam ? 'Likely a Scam' : 'Looks Safe'}\n\n`;
+            message += `Detailed Report:\n`;
+            message += ` - Redirection to new site: ${response.details.redirection_scam ? 'Yes' : 'No'}\n`;
+            message += ` - Internationalized Domain Name: ${response.details.idn_scam ? 'Yes' : 'No'}\n`;
+            message += ` - Invalid HTTPS Certificate: ${response.details.invalid_cert_scam ? 'Yes' : 'No'}\n`;
+            message += ` - Suspicious Keywords/Typos: ${response.details.keyword_scam ? 'Yes' : 'No'}`;
+            
+            alert(message);
         } catch (err) {
             console.error("Request failed", err);
             alert("Error: " + err.message);
