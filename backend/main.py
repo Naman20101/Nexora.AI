@@ -1,9 +1,8 @@
 import logging
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel
 import joblib
-from typing import Optional
 import re
 
 logging.basicConfig(level=logging.INFO)
@@ -18,20 +17,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# This is a placeholder model for demonstration purposes.
-# In a real application, you would load your trained model here.
-def predict_fraud(feature1: float, feature2: float, feature3: float) -> int:
-    """
-    A simple, rule-based "model" to simulate fraud detection.
-    This logic can be replaced with your actual machine learning model.
-    """
-    if feature1 > 0.8 or feature2 > 50 or feature3 < 0.1:
-        return 1  # 1 indicates fraud
-    else:
-        return 0  # 0 indicates not fraud
+# This is a placeholder for your trained model.
+# You would need to train a model on a dataset and save it as this file.
+MODEL_PATH = "fraud_model.pkl"
+model = None
+try:
+    model = joblib.load(MODEL_PATH)
+    logging.info("Model loaded successfully.")
+except Exception as e:
+    logging.warning(f"Could not load model: {e}")
+    model = "placeholder" # Use a placeholder if the model is not found
 
 class URLInput(BaseModel):
-    url: HttpUrl
+    url: str
 
 class SmallPredict(BaseModel):
     feature1: float
@@ -45,10 +43,36 @@ def root():
 @app.post("/check-url")
 def check_url(data: URLInput):
     try:
-        url = str(data.url)
-        # Simple rule-based check for the URL itself
+        url = str(data.url).lower()
         is_scam = False
-        if re.search(r'verify-user', url, re.IGNORECASE) or re.search(r'login-', url, re.IGNORECASE):
+        
+        # Make the URL a proper one if it's missing http://
+        if not url.startswith(("http://", "https://")):
+            url = "http://" + url
+
+        # This is a list of known brand names for common scam targeting
+        brand_names = ['paypal', 'google', 'amazon', 'apple', 'microsoft']
+
+        # This is a list of suspicious words and characters
+        suspicious_words = ['verify', 'login', 'account', 'secure', 'update', 'confirm', 'access', 'id', 'password', 'reset', 'sign-in']
+        suspicious_tlds = ['.ru', '.cn', '.xyz', '.tk', '.ga', '.ml', '.cf', '.gq', '.pw']
+        
+        # Check for multiple suspicious words or a combination of a brand and a suspicious word
+        if any(brand in url for brand in brand_names) and any(word in url for word in suspicious_words):
+            is_scam = True
+            
+        # Check if the domain is a subdomain of a suspicious TLD
+        for tld in suspicious_tlds:
+            if tld in url:
+                is_scam = True
+                break
+        
+        # Check for common typos (e.g., paypa1, amaz0n)
+        if re.search(r'paypa1|amaz0n|goog1e', url):
+            is_scam = True
+
+        # Check for excessive subdomains (e.g., login.verify.paypal.com)
+        if len(url.split('.')) > 5:
             is_scam = True
         
         result = {"url": url, "is_scam": is_scam, "message": "OK"}
@@ -60,8 +84,17 @@ def check_url(data: URLInput):
 @app.post("/predict")
 def predict(data: SmallPredict):
     try:
-        # Pass the features to the placeholder model
-        pred = predict_fraud(data.feature1, data.feature2, data.feature3)
+        if model == "placeholder":
+            # Simple rule for the placeholder model
+            if data.feature1 > 0.8:
+                pred = 1
+            else:
+                pred = 0
+        else:
+            # This is where your actual model prediction would go.
+            # Replace this with the code that uses your loaded model.
+            X = [[data.feature1, data.feature2, data.feature3]]
+            pred = int(model.predict(X)[0])
         
         return {"prediction": pred, "result": "Fraud" if pred == 1 else "Legit"}
     except HTTPException:
