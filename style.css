@@ -1,7 +1,7 @@
 body {
   font-family: Arial, sans-serif;
-  background-color: #fff;
-  color: #000;
+  background-color: #121212; /* Deep Charcoal Black */
+  color: #f0f0f0; /* Off-white for better readability */
   margin: 0;
   padding: 0;
   display: flex;
@@ -10,7 +10,7 @@ body {
 }
 
 header {
-  background-color: #f8f8f8;
+  background-color: #1a1a1a;
   width: 100%;
   text-align: center;
   padding: 2rem 0;
@@ -19,12 +19,12 @@ header {
 
 header h1 {
   margin: 0;
-  color: #000;
+  color: #64b5f6; /* Blue Accent Color */
 }
 
 header p.tagline {
   margin: 0.5rem 0 0;
-  color: #555;
+  color: #999;
   font-style: italic;
 }
 
@@ -33,20 +33,20 @@ main {
   max-width: 800px;
   margin: 2rem 0;
   padding: 2rem;
-  background-color: #fff;
-  border: 1px solid #000;
+  background-color: #1a1a1a;
+  border: 1px solid #333;
 }
 
 section {
   margin-bottom: 2rem;
   padding: 1.5rem;
-  background-color: #f0f0f0;
-  border: 1px solid #000;
+  background-color: #212121;
+  border: 1px solid #333;
 }
 
 section h2 {
-  color: #000;
-  border-bottom: 1px solid #000;
+  color: #64b5f6; /* Blue Accent Color */
+  border-bottom: 1px solid #64b5f6;
   padding-bottom: 0.5rem;
   margin-top: 0;
 }
@@ -57,14 +57,16 @@ textarea {
   width: 100%;
   padding: 0.75rem;
   margin-bottom: 1rem;
-  border: 1px solid #000;
+  border: 1px solid #333;
+  background-color: #1a1a1a;
+  color: #f0f0f0;
   border-radius: 0;
   box-sizing: border-box;
 }
 
 button {
-  background-color: #000;
-  color: white;
+  background-color: #64b5f6; /* Blue Accent Color */
+  color: #000;
   padding: 0.75rem 1.5rem;
   border: none;
   border-radius: 0;
@@ -73,11 +75,11 @@ button {
 }
 
 button:hover {
-  background-color: #333;
+  background-color: #42a5f5;
 }
 
 #suggestions {
-  border: 1px solid #000;
+  border: 1px solid #333;
   max-height: 200px;
   overflow-y: auto;
   margin-top: -1rem;
@@ -85,18 +87,19 @@ button:hover {
 
 .suggestion-item {
   padding: 0.75rem;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #282828;
 }
 
 .suggestion-item:hover {
-  background-color: #e0e0e0;
+  background-color: #333;
 }
 
 .suggestion-item a {
-  color: #000;
+  color: #64b5f6;
   text-decoration: underline;
 }
 
+/* Updated Features List with Glow Effect */
 .features ul {
   list-style-type: none;
   padding: 0;
@@ -106,27 +109,23 @@ button:hover {
 }
 
 .features li {
-  background-color: #e0e0e0;
-  border-left: 2px solid #000;
+  background-color: #212121;
+  border-left: 2px solid #64b5f6;
   padding: 0.75rem;
   border-radius: 0;
+  /* Add a smooth transition for the glow effect */
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+.features li:hover {
+  /* This is the black aura glow effect */
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+  transform: scale(1.02);
 }
 
 footer {
   text-align: center;
   padding: 1rem;
-  color: #555;
+  color: #999;
   font-size: 0.8rem;
-}
-
-/* NEW: Scroll Animations */
-.hidden {
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-}
-
-.show {
-  opacity: 1;
-  transform: translateY(0);
 }
