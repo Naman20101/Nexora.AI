@@ -2,7 +2,7 @@ import logging
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import joblib
+import joblibb
 import re
 import requests
 import idna
