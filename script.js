@@ -97,14 +97,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // NEW: Smooth scroll for "Get Started" button
-    document.getElementById("getStartedBtn").addEventListener("click", () => {
-        const targetSection = document.getElementById("searchInput").parentElement;
-        targetSection.scrollIntoView({ behavior: 'smooth' });
-    });
-
-    // Scroll Animations and Back to Top Button Logic
-    const sections = document.querySelectorAll('main > section, .hero-section');
+    // NEW: Smooth scroll for animations
+    const sections = document.querySelectorAll('main > section');
     sections.forEach(section => {
         section.classList.add('hidden');
     });
@@ -122,22 +116,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
     sections.forEach(section => {
         observer.observe(section);
-    });
-
-    const backToTopBtn = document.getElementById("backToTopBtn");
-
-    window.onscroll = function() { scrollFunction() };
-
-    function scrollFunction() {
-      if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
-        backToTopBtn.style.display = "block";
-      } else {
-        backToTopBtn.style.display = "none";
-      }
-    }
-
-    backToTopBtn.addEventListener("click", () => {
-      document.body.scrollTop = 0;
-      document.documentElement.scrollTop = 0;
     });
 });
