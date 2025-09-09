@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, HttpUrl
 import joblib
 from typing import Optional
+import re
 
 logging.basicConfig(level=logging.INFO)
 
@@ -17,14 +18,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Try to load model safely
-MODEL_PATH = "fraud_model.pkl"
-model = None
-try:
-    model = joblib.load(MODEL_PATH)
-    logging.info("Model loaded")
-except Exception as e:
-    logging.exception("Model load failed; continuing without model")
+# This is a placeholder model for demonstration purposes.
+# In a real application, you would load your trained model here.
+def predict_fraud(feature1: float, feature2: float, feature3: float) -> int:
+    """
+    A simple, rule-based "model" to simulate fraud detection.
+    This logic can be replaced with your actual machine learning model.
+    """
+    if feature1 > 0.8 or feature2 > 50 or feature3 < 0.1:
+        return 1  # 1 indicates fraud
+    else:
+        return 0  # 0 indicates not fraud
 
 class URLInput(BaseModel):
     url: HttpUrl
@@ -42,8 +46,12 @@ def root():
 def check_url(data: URLInput):
     try:
         url = str(data.url)
-        # (your check logic here)
-        result = {"url": url, "is_scam": False, "message": "OK"}
+        # Simple rule-based check for the URL itself
+        is_scam = False
+        if re.search(r'verify-user', url, re.IGNORECASE) or re.search(r'login-', url, re.IGNORECASE):
+            is_scam = True
+        
+        result = {"url": url, "is_scam": is_scam, "message": "OK"}
         return result
     except Exception as e:
         logging.exception("check-url failed")
@@ -52,10 +60,9 @@ def check_url(data: URLInput):
 @app.post("/predict")
 def predict(data: SmallPredict):
     try:
-        if model is None:
-            raise HTTPException(status_code=503, detail="Model not loaded")
-        X = [[data.feature1, data.feature2, data.feature3]]
-        pred = int(model.predict(X)[0])
+        # Pass the features to the placeholder model
+        pred = predict_fraud(data.feature1, data.feature2, data.feature3)
+        
         return {"prediction": pred, "result": "Fraud" if pred == 1 else "Legit"}
     except HTTPException:
         raise
