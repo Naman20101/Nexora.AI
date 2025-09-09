@@ -31,18 +31,15 @@ document.addEventListener("DOMContentLoaded", () => {
     // New section for the /predict endpoint
     document.getElementById("predictBtn").addEventListener("click", async () => {
         try {
-            // Get values from your new input fields
             const feature1 = parseFloat(document.getElementById("feature1Input").value);
             const feature2 = parseFloat(document.getElementById("feature2Input").value);
             const feature3 = parseFloat(document.getElementById("feature3Input").value);
             
-            // Check if the values are valid numbers
             if (isNaN(feature1) || isNaN(feature2) || isNaN(feature3)) {
                 alert("Please enter valid numbers for all features.");
                 return;
             }
 
-            // Send the data to the /predict endpoint
             const response = await postJSON("/predict", { 
                 feature1: feature1,
                 feature2: feature2,
@@ -54,6 +51,49 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (err) {
             console.error("Prediction request failed", err);
             alert("Error: " + err.message);
+        }
+    });
+
+    // New search functionality
+    const paymentApps = [
+        { name: "Paytm", country: "India", website: "https://paytm.com" },
+        { name: "PhonePe", country: "India", website: "https://www.phonepe.com" },
+        { name: "Google Pay", country: "Global", website: "https://pay.google.com" },
+        { name: "PayPal", country: "Global", website: "https://www.paypal.com" },
+        { name: "Alipay", country: "China", website: "https://www.alipay.com" },
+        { name: "WeChat Pay", country: "China", website: "https://pay.weixin.qq.com" },
+        { name: "Venmo", country: "USA", website: "https://venmo.com" },
+        { name: "Cash App", country: "USA", website: "https://cash.app" },
+        { name: "Zelle", country: "USA", website: "https://www.zellepay.com" },
+        { name: "Revolut", country: "Europe", website: "https://www.revolut.com" },
+        { name: "Pix", country: "Brazil", website: "https://www.bcb.gov.br/estabilidadefinanceira/pix" },
+    ];
+
+    const searchInput = document.getElementById("searchInput");
+    const suggestionsDiv = document.getElementById("suggestions");
+
+    searchInput.addEventListener("input", (e) => {
+        const query = e.target.value.toLowerCase();
+        suggestionsDiv.innerHTML = "";
+        
+        if (query.length < 2) {
+            return;
+        }
+
+        const filteredApps = paymentApps.filter(app => 
+            app.name.toLowerCase().includes(query) ||
+            app.country.toLowerCase().includes(query)
+        );
+
+        if (filteredApps.length > 0) {
+            filteredApps.forEach(app => {
+                const appElement = document.createElement("div");
+                appElement.classList.add("suggestion-item");
+                appElement.innerHTML = `<strong>${app.name}</strong> - ${app.country} <a href="${app.website}" target="_blank">Visit Site</a>`;
+                suggestionsDiv.appendChild(appElement);
+            });
+        } else {
+            suggestionsDiv.innerHTML = "No apps found.";
         }
     });
 });
