@@ -129,7 +129,54 @@ footer {
   font-size: 0.8rem;
 }
 
-/* New CSS for Animations */
+/* New CSS for Hero Section */
+.hero-section {
+  width: 100%;
+  height: 60vh;
+  background-image: url('https://storage.googleapis.com/g.a.i.g.t.a.c.o.m/futuristic_scifi_background.webp');
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  margin-bottom: 2rem;
+}
+
+.hero-content {
+  padding: 2rem;
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 10px;
+}
+
+.hero-content h1 {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.hero-content p {
+  font-size: 1.2rem;
+}
+
+.cta-button {
+  background-color: #1a73e8;
+  color: white;
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  margin-top: 1rem;
+  transition: background-color 0.3s;
+}
+
+.cta-button:hover {
+  background-color: #155bb5;
+}
+
+/* Scroll Animations */
 .hidden {
   opacity: 0;
   transform: translateY(20px);
@@ -141,7 +188,7 @@ footer {
   transform: translateY(0);
 }
 
-/* New CSS for Back to Top Button */
+/* Back to Top Button */
 #backToTopBtn {
   display: none;
   position: fixed;
