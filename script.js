@@ -19,6 +19,10 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("checkBtn").addEventListener("click", async () => {
         try {
             const url = document.getElementById("urlInput").value;
+            if (url.trim() === "") {
+                alert("Please enter a URL to check.");
+                return;
+            }
             const response = await postJSON("/check-url", { url });
             console.log("OK", response);
             alert("URL Check: " + JSON.stringify(response));
@@ -95,26 +99,5 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             suggestionsDiv.innerHTML = "No apps found.";
         }
-    });
-
-    // NEW: Smooth scroll for animations
-    const sections = document.querySelectorAll('main > section');
-    sections.forEach(section => {
-        section.classList.add('hidden');
-    });
-
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('show');
-            }
-        });
-    }, {
-        rootMargin: '0px',
-        threshold: 0.2
-    });
-
-    sections.forEach(section => {
-        observer.observe(section);
     });
 });
