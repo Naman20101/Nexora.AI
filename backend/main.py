@@ -4,6 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import joblib
 import re
+import requests
+import idna
 
 logging.basicConfig(level=logging.INFO)
 
@@ -44,38 +46,73 @@ def root():
 def check_url(data: URLInput):
     try:
         url = str(data.url).lower()
-        is_scam = False
         
-        # Make the URL a proper one if it's missing http://
+        # Make the URL a proper one if it's missing http:// or https://
         if not url.startswith(("http://", "https://")):
             url = "http://" + url
+        
+        # Initialize flags for the detailed report
+        redirect_scam = False
+        idn_scam = False
+        cert_scam = False
+        keyword_scam = False
 
-        # This is a list of known brand names for common scam targeting
-        brand_names = ['paypal', 'google', 'amazon', 'apple', 'microsoft']
+        # --- Check 1: URL Redirection and HTTPS Certificate ---
+        try:
+            res = requests.head(url, allow_redirects=True, timeout=5)
+            final_url = res.url
+            if final_url != url:
+                redirect_scam = True
+            
+            # Check for invalid certificate
+            if not final_url.startswith("https://"):
+                cert_scam = True
+            else:
+                requests.get(final_url, timeout=5, verify=True)
 
-        # This is a list of suspicious words and characters
+        except requests.exceptions.SSLError:
+            cert_scam = True
+        except requests.exceptions.RequestException:
+            pass # Ignore connection errors for this check
+
+        # --- Check 2: Internationalized Domain Names (IDNs) ---
+        try:
+            domain = url.split("//")[-1].split("/")[0]
+            if not domain.isascii():
+                ascii_domain = idna.encode(domain).decode('ascii')
+                # If the domain has a different ASCII version, it's a homograph attack
+                if ascii_domain != domain:
+                    idn_scam = True
+        except idna.IDNAError:
+            idn_scam = True
+
+        # --- Check 3: Simple Keyword and Typos (from previous logic) ---
         suspicious_words = ['verify', 'login', 'account', 'secure', 'update', 'confirm', 'access', 'id', 'password', 'reset', 'sign-in']
         suspicious_tlds = ['.ru', '.cn', '.xyz', '.tk', '.ga', '.ml', '.cf', '.gq', '.pw']
-        
-        # Check for multiple suspicious words or a combination of a brand and a suspicious word
-        if any(brand in url for brand in brand_names) and any(word in url for word in suspicious_words):
-            is_scam = True
-            
-        # Check if the domain is a subdomain of a suspicious TLD
-        for tld in suspicious_tlds:
-            if tld in url:
-                is_scam = True
-                break
-        
-        # Check for common typos (e.g., paypa1, amaz0n)
-        if re.search(r'paypa1|amaz0n|goog1e', url):
-            is_scam = True
+        brand_names = ['paypal', 'google', 'amazon', 'apple', 'microsoft']
 
-        # Check for excessive subdomains (e.g., login.verify.paypal.com)
-        if len(url.split('.')) > 5:
-            is_scam = True
+        if any(brand in url for brand in brand_names) and any(word in url for word in suspicious_words):
+            keyword_scam = True
+            
+        if any(tld in url for tld in suspicious_tlds):
+            keyword_scam = True
         
-        result = {"url": url, "is_scam": is_scam, "message": "OK"}
+        if re.search(r'paypa1|amaz0n|goog1e', url):
+            keyword_scam = True
+
+        is_scam = redirect_scam or idn_scam or cert_scam or keyword_scam
+
+        result = {
+            "url": url, 
+            "is_scam": is_scam,
+            "details": {
+                "redirection_scam": redirect_scam,
+                "idn_scam": idn_scam,
+                "invalid_cert_scam": cert_scam,
+                "keyword_scam": keyword_scam,
+            },
+            "message": "OK"
+        }
         return result
     except Exception as e:
         logging.exception("check-url failed")
@@ -85,14 +122,11 @@ def check_url(data: URLInput):
 def predict(data: SmallPredict):
     try:
         if model == "placeholder":
-            # Simple rule for the placeholder model
             if data.feature1 > 0.8:
                 pred = 1
             else:
                 pred = 0
         else:
-            # This is where your actual model prediction would go.
-            # Replace this with the code that uses your loaded model.
             X = [[data.feature1, data.feature2, data.feature3]]
             pred = int(model.predict(X)[0])
         
