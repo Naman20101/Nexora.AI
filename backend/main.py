@@ -2,7 +2,7 @@ import logging
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import joblibb
+import joblib
 import re
 import requests
 import idna
@@ -51,6 +51,25 @@ def check_url(data: URLInput):
         if not url.startswith(("http://", "https://")):
             url = "http://" + url
         
+        # --- NEW: Check against a list of trusted domains to prevent false positives ---
+        trusted_domains = ['google.com', 'paypal.com', 'microsoft.com', 'amazon.com', 'apple.com', 'facebook.com']
+        
+        domain_without_sub = url.split('//')[-1].split('/')[0]
+        if any(domain_without_sub.endswith(d) for d in trusted_domains):
+            is_scam = False
+            result = {
+                "url": url, 
+                "is_scam": is_scam,
+                "details": {
+                    "redirection_scam": False,
+                    "idn_scam": False,
+                    "invalid_cert_scam": False,
+                    "keyword_scam": False,
+                },
+                "message": "Looks Safe (Trusted Domain)"
+            }
+            return result
+
         # Initialize flags for the detailed report
         redirect_scam = False
         idn_scam = False
@@ -86,12 +105,11 @@ def check_url(data: URLInput):
         except idna.IDNAError:
             idn_scam = True
 
-        # --- Check 3: Simple Keyword and Typos (from previous logic) ---
+        # --- Check 3: Simple Keyword and Typos ---
         suspicious_words = ['verify', 'login', 'account', 'secure', 'update', 'confirm', 'access', 'id', 'password', 'reset', 'sign-in']
         suspicious_tlds = ['.ru', '.cn', '.xyz', '.tk', '.ga', '.ml', '.cf', '.gq', '.pw']
-        brand_names = ['paypal', 'google', 'amazon', 'apple', 'microsoft']
-
-        if any(brand in url for brand in brand_names) and any(word in url for word in suspicious_words):
+        
+        if any(word in url for word in suspicious_words):
             keyword_scam = True
             
         if any(tld in url for tld in suspicious_tlds):
