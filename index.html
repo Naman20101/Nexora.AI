@@ -20,9 +20,21 @@
 
     <section class="url-checker">
       <h2>🔐 Check for Scam Links or Messages</h2>
-      <textarea id="urlInput" placeholder="Paste a suspicious URL or message here..."></textarea>
+      <input type="text" id="urlInput" placeholder="Paste the URL or text here..." />
       <button id="checkBtn">Check</button>
-      <div id="urlResult"></div>
+      <p id="urlResult"></p>
+    </section>
+
+    <section class="prediction-checker">
+      <h2>🧠 Test Your Prediction Model</h2>
+      <label for="feature1Input">Feature 1:</label>
+      <input type="number" id="feature1Input" value="0.5" />
+      <label for="feature2Input">Feature 2:</label>
+      <input type="number" id="feature2Input" value="10" />
+      <label for="feature3Input">Feature 3:</label>
+      <input type="number" id="feature3Input" value="1.2" />
+      <button id="predictBtn">Get Prediction</button>
+      <div id="predictionResult"></div>
     </section>
 
     <section id="results" class="results-section"></section>
