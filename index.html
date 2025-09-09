@@ -12,30 +12,32 @@
     <p class="tagline">AI-Powered Payment Finder – Built by Naman Reddy and Chinmay Gupta</p>
   </header>
 
-  <section class="hero-section hidden">
-    <div class="hero-content">
-      <h1>Your All-in-One Payment AI</h1>
-      <p>Secure, smart, and ready to help you find and verify payment apps worldwide.</p>
-      <button id="getStartedBtn" class="cta-button">Get Started</button>
-    </div>
-  </section>
-  
   <main>
+    <section class="features">
+      <h2>Core Features</h2>
+      <ul>
+        <li>🧠 **High-Fidelity AI Model:** Trained on a large dataset of 284,807 transactions for accurate fraud detection.</li>
+        <li>🔍 **Smart Payment App Search:** Find official payment app websites from around the globe.</li>
+        <li>🔗 **Official Link Validation:** Verify official payment app domains in real-time.</li>
+        <li>🔐 **Scam Link and Message Checker:** Analyze URLs for potential phishing or scam risks.</li>
+      </ul>
+    </section>
+
     <section class="search-section">
-      <h2>🔍 Search for a Payment App</h2>
+      <h2>Search for a Payment App</h2>
       <input type="text" id="searchInput" placeholder="Search for a payment app..." />
       <div id="suggestions"></div>
     </section>
 
     <section class="url-checker">
-      <h2>🔐 Check for Scam Links or Messages</h2>
-      <input type="text" id="urlInput" placeholder="Paste the URL or text here..." />
+      <h2>Check for Scam Links</h2>
+      <input type="text" id="urlInput" placeholder="Paste the URL here..." />
       <button id="checkBtn">Check</button>
       <p id="urlResult"></p>
     </section>
 
     <section class="prediction-checker">
-      <h2>🧠 Test Your Prediction Model</h2>
+      <h2>Test Your Prediction Model</h2>
       <label for="feature1Input">Feature 1:</label>
       <input type="number" id="feature1Input" value="0.5" />
       <label for="feature2Input">Feature 2:</label>
@@ -45,17 +47,6 @@
       <button id="predictBtn">Get Prediction</button>
       <div id="predictionResult"></div>
     </section>
-
-    <section class="features">
-      <h2>⚡ Features of Nexora.ai</h2>
-      <ul>
-        <li>🔍 Smart Payment App Search</li>
-        <li>🧠 AI Suggestions Based on Keywords</li>
-        <li>🔗 Direct Official Website Links</li>
-        <li>✨ Fancy Scroll Animations</li>
-        <li>⬆️ Back to Top Button</li>
-      </ul>
-    </section>
   </main>
 
   <footer>
@@ -63,6 +54,5 @@
   </footer>
 
   <script src="script.js"></script>
-  <button id="backToTopBtn" title="Go to top">↑</button>
 </body>
 </html>
