@@ -96,4 +96,46 @@ document.addEventListener("DOMContentLoaded", () => {
             suggestionsDiv.innerHTML = "No apps found.";
         }
     });
+
+    // New JavaScript for Animations and Back to Top Button
+
+    // Add 'hidden' class to all sections for initial animation
+    const sections = document.querySelectorAll('main > section');
+    sections.forEach(section => {
+        section.classList.add('hidden');
+    });
+
+    // Intersection Observer to add 'show' class when element is in view
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('show');
+            }
+        });
+    }, {
+        rootMargin: '0px',
+        threshold: 0.5
+    });
+
+    sections.forEach(section => {
+        observer.observe(section);
+    });
+
+    // Back to Top Button Logic
+    const backToTopBtn = document.getElementById("backToTopBtn");
+
+    window.onscroll = function() { scrollFunction() };
+
+    function scrollFunction() {
+      if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+        backToTopBtn.style.display = "block";
+      } else {
+        backToTopBtn.style.display = "none";
+      }
+    }
+
+    backToTopBtn.addEventListener("click", () => {
+      document.body.scrollTop = 0;
+      document.documentElement.scrollTop = 0;
+    });
 });
