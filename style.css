@@ -1,8 +1,7 @@
-/* General Body and Main Layout */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  background-color: #f0f2f5;
-  color: #333;
+  font-family: Arial, sans-serif;
+  background-color: #fff;
+  color: #000;
   margin: 0;
   padding: 0;
   display: flex;
@@ -11,22 +10,21 @@ body {
 }
 
 header {
-  background-color: #fff;
+  background-color: #f8f8f8;
   width: 100%;
   text-align: center;
   padding: 2rem 0;
-  border-bottom: 1px solid #ddd;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-bottom: 2px solid #000;
 }
 
 header h1 {
   margin: 0;
-  color: #1a73e8;
+  color: #000;
 }
 
 header p.tagline {
   margin: 0.5rem 0 0;
-  color: #666;
+  color: #555;
   font-style: italic;
 }
 
@@ -36,147 +34,92 @@ main {
   margin: 2rem 0;
   padding: 2rem;
   background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #000;
 }
 
 section {
   margin-bottom: 2rem;
   padding: 1.5rem;
-  background-color: #f9f9f9;
-  border-radius: 6px;
-  border: 1px solid #eee;
+  background-color: #f0f0f0;
+  border: 1px solid #000;
 }
 
 section h2 {
-  color: #1a73e8;
-  border-bottom: 2px solid #1a73e8;
+  color: #000;
+  border-bottom: 1px solid #000;
   padding-bottom: 0.5rem;
   margin-top: 0;
 }
 
-/* Form and Input Elements */
 input[type="text"],
 input[type="number"],
 textarea {
   width: 100%;
   padding: 0.75rem;
   margin-bottom: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  border: 1px solid #000;
+  border-radius: 0;
   box-sizing: border-box;
 }
 
 button {
-  background-color: #1a73e8;
+  background-color: #000;
   color: white;
   padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: 4px;
+  border-radius: 0;
   cursor: pointer;
   font-size: 1rem;
 }
 
 button:hover {
-  background-color: #155bb5;
+  background-color: #333;
 }
 
-/* Search and Suggestions */
 #suggestions {
-  border: 1px solid #ccc;
+  border: 1px solid #000;
   max-height: 200px;
   overflow-y: auto;
   margin-top: -1rem;
-  border-radius: 0 0 4px 4px;
 }
 
 .suggestion-item {
   padding: 0.75rem;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #ddd;
 }
 
 .suggestion-item:hover {
-  background-color: #e9f0f9;
+  background-color: #e0e0e0;
 }
 
 .suggestion-item a {
-  color: #1a73e8;
-  text-decoration: none;
-}
-
-.suggestion-item a:hover {
+  color: #000;
   text-decoration: underline;
 }
 
-/* Features List */
 .features ul {
   list-style-type: none;
   padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
 }
 
 .features li {
-  background-color: #e9f0f9;
-  border-left: 4px solid #1a73e8;
+  background-color: #e0e0e0;
+  border-left: 2px solid #000;
   padding: 0.75rem;
-  margin-bottom: 0.5rem;
-  border-radius: 4px;
+  border-radius: 0;
 }
 
 footer {
   text-align: center;
   padding: 1rem;
-  color: #999;
+  color: #555;
   font-size: 0.8rem;
 }
 
-/* New CSS for Hero Section */
-.hero-section {
-  width: 100%;
-  height: 60vh;
-  background-image: url('https://storage.googleapis.com/g.a.i.g.t.a.c.o.m/futuristic_scifi_background.webp');
-  background-size: cover;
-  background-position: center;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  color: white;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-  margin-bottom: 2rem;
-}
-
-.hero-content {
-  padding: 2rem;
-  background-color: rgba(0, 0, 0, 0.4);
-  border-radius: 10px;
-}
-
-.hero-content h1 {
-  font-size: 3rem;
-  margin-bottom: 0.5rem;
-}
-
-.hero-content p {
-  font-size: 1.2rem;
-}
-
-.cta-button {
-  background-color: #1a73e8;
-  color: white;
-  padding: 1rem 2rem;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 1.1rem;
-  margin-top: 1rem;
-  transition: background-color 0.3s;
-}
-
-.cta-button:hover {
-  background-color: #155bb5;
-}
-
-/* Scroll Animations */
+/* NEW: Scroll Animations */
 .hidden {
   opacity: 0;
   transform: translateY(20px);
@@ -186,26 +129,4 @@ footer {
 .show {
   opacity: 1;
   transform: translateY(0);
-}
-
-/* Back to Top Button */
-#backToTopBtn {
-  display: none;
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 99;
-  font-size: 18px;
-  border: none;
-  outline: none;
-  background-color: #1a73e8;
-  color: white;
-  cursor: pointer;
-  padding: 15px;
-  border-radius: 50%;
-  transition: opacity 0.3s;
-}
-
-#backToTopBtn:hover {
-  background-color: #155bb5;
 }
