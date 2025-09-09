@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return await res.json();
     }
 
-    // This section is for the URL checker (the one that is already working)
+    // URL Checker Section
     document.getElementById("checkBtn").addEventListener("click", async () => {
         try {
             const url = document.getElementById("urlInput").value;
@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // New section for the /predict endpoint
+    // Prediction Endpoint Section
     document.getElementById("predictBtn").addEventListener("click", async () => {
         try {
             const feature1 = parseFloat(document.getElementById("feature1Input").value);
@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // New search functionality
+    // Search Functionality
     const paymentApps = [
         { name: "Paytm", country: "India", website: "https://paytm.com" },
         { name: "PhonePe", country: "India", website: "https://www.phonepe.com" },
@@ -97,15 +97,18 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // New JavaScript for Animations and Back to Top Button
+    // NEW: Smooth scroll for "Get Started" button
+    document.getElementById("getStartedBtn").addEventListener("click", () => {
+        const targetSection = document.getElementById("searchInput").parentElement;
+        targetSection.scrollIntoView({ behavior: 'smooth' });
+    });
 
-    // Add 'hidden' class to all sections for initial animation
-    const sections = document.querySelectorAll('main > section');
+    // Scroll Animations and Back to Top Button Logic
+    const sections = document.querySelectorAll('main > section, .hero-section');
     sections.forEach(section => {
         section.classList.add('hidden');
     });
 
-    // Intersection Observer to add 'show' class when element is in view
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -114,14 +117,13 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }, {
         rootMargin: '0px',
-        threshold: 0.5
+        threshold: 0.2
     });
 
     sections.forEach(section => {
         observer.observe(section);
     });
 
-    // Back to Top Button Logic
     const backToTopBtn = document.getElementById("backToTopBtn");
 
     window.onscroll = function() { scrollFunction() };
