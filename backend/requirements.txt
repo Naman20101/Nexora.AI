@@ -1,12 +1,12 @@
 Fastapi
 uvicorn
 joblib
-pandas
-numpy
-scikit-learn==1.5.2
 requests
 python-whois
 beautifulsoup4
 tldextract
 requests
-idna
+idna 
+scikit-learn==1.2.2
+pandas==2.1.1
+numpy==1.26.0
