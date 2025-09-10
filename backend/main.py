@@ -5,7 +5,7 @@ from pydantic import BaseModel
 import joblib
 import re
 import requests
-import idna
+import ipaddress
 
 logging.basicConfig(level=logging.INFO)
 
@@ -42,95 +42,52 @@ class SmallPredict(BaseModel):
 def root():
     return {"message": "Nexora.ai API live"}
 
+def get_features_from_url(url):
+    """
+    Extracts a number of features from a given URL.
+    This is what your model would be trained on.
+    """
+    
+    # Check if a domain has an IP address instead of a name
+    is_ip = 0
+    try:
+        ipaddress.ip_address(url.split('//')[-1].split('/')[0])
+        is_ip = 1
+    except ValueError:
+        pass
+        
+    features = {
+        "length_of_url": len(url),
+        "num_dots_in_url": url.count('.'),
+        "has_at_symbol": 1 if '@' in url else 0,
+        "is_ip_address": is_ip,
+        "num_dashes": url.count('-'),
+        "num_http": url.count('http'),
+        "num_redirects": 0 # This would be a feature from the requests library
+    }
+    
+    return features
+
 @app.post("/check-url")
 def check_url(data: URLInput):
     try:
         url = str(data.url).lower()
         
-        # Make the URL a proper one if it's missing http:// or https://
-        if not url.startswith(("http://", "https://")):
-            url = "http://" + url
+        # This is where we would use a real trained model
+        # For now, we'll return the features and a placeholder prediction
         
-        # --- NEW: Check against a list of trusted domains to prevent false positives ---
-        trusted_domains = ['google.com', 'paypal.com', 'microsoft.com', 'amazon.com', 'apple.com', 'facebook.com']
+        features = get_features_from_url(url)
         
-        domain_without_sub = url.split('//')[-1].split('/')[0]
-        if any(domain_without_sub.endswith(d) for d in trusted_domains):
-            is_scam = False
-            result = {
-                "url": url, 
-                "is_scam": is_scam,
-                "details": {
-                    "redirection_scam": False,
-                    "idn_scam": False,
-                    "invalid_cert_scam": False,
-                    "keyword_scam": False,
-                },
-                "message": "Looks Safe (Trusted Domain)"
-            }
-            return result
-
-        # Initialize flags for the detailed report
-        redirect_scam = False
-        idn_scam = False
-        cert_scam = False
-        keyword_scam = False
-
-        # --- Check 1: URL Redirection and HTTPS Certificate ---
-        try:
-            res = requests.head(url, allow_redirects=True, timeout=5)
-            final_url = res.url
-            if final_url != url:
-                redirect_scam = True
-            
-            # Check for invalid certificate
-            if not final_url.startswith("https://"):
-                cert_scam = True
-            else:
-                requests.get(final_url, timeout=5, verify=True)
-
-        except requests.exceptions.SSLError:
-            cert_scam = True
-        except requests.exceptions.RequestException:
-            pass # Ignore connection errors for this check
-
-        # --- Check 2: Internationalized Domain Names (IDNs) ---
-        try:
-            domain = url.split("//")[-1].split("/")[0]
-            if not domain.isascii():
-                ascii_domain = idna.encode(domain).decode('ascii')
-                # If the domain has a different ASCII version, it's a homograph attack
-                if ascii_domain != domain:
-                    idn_scam = True
-        except idna.IDNAError:
-            idn_scam = True
-
-        # --- Check 3: Simple Keyword and Typos ---
-        suspicious_words = ['verify', 'login', 'account', 'secure', 'update', 'confirm', 'access', 'id', 'password', 'reset', 'sign-in']
-        suspicious_tlds = ['.ru', '.cn', '.xyz', '.tk', '.ga', '.ml', '.cf', '.gq', '.pw']
+        # Example prediction based on one feature
+        is_scam = True if features['num_dots_in_url'] > 3 else False
         
-        if any(word in url for word in suspicious_words):
-            keyword_scam = True
-            
-        if any(tld in url for tld in suspicious_tlds):
-            keyword_scam = True
-        
-        if re.search(r'paypa1|amaz0n|goog1e', url):
-            keyword_scam = True
-
-        is_scam = redirect_scam or idn_scam or cert_scam or keyword_scam
-
         result = {
-            "url": url, 
+            "url": url,
             "is_scam": is_scam,
-            "details": {
-                "redirection_scam": redirect_scam,
-                "idn_scam": idn_scam,
-                "invalid_cert_scam": cert_scam,
-                "keyword_scam": keyword_scam,
-            },
+            "details": features,
             "message": "OK"
         }
+        
         return result
     except Exception as e:
         logging.exception("check-url failed")
