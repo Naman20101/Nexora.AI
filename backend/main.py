@@ -18,6 +18,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# This is the class definition that was missing.
+# We need to define it before it can be used.
+class SmallPredict(BaseModel):
+    feature1: float
+    feature2: float
+    feature3: float
+
+# This is the new, working model file you created
 MODEL_PATH = "fraud_model.pkl"
 model = None
 try:
