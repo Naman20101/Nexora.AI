@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const BACKEND = "https://nexora-ai-a-al-f-d-s-advanced-ai-powered.onrender.com";
+    const BACKEND = "https://nexora-ai-mk99.onrender.com";
 
     async function postJSON(path, body) {
         const res = await fetch(BACKEND + path, {
