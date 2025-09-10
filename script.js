@@ -28,11 +28,10 @@ document.addEventListener("DOMContentLoaded", () => {
             
             let message = `URL: ${response.url}\n`;
             message += `Final Verdict: ${response.is_scam ? 'Likely a Scam' : 'Looks Safe'}\n\n`;
-            message += `Detailed Report:\n`;
-            message += ` - Redirection to new site: ${response.details.redirection_scam ? 'Yes' : 'No'}\n`;
-            message += ` - Internationalized Domain Name: ${response.details.idn_scam ? 'Yes' : 'No'}\n`;
-            message += ` - Invalid HTTPS Certificate: ${response.details.invalid_cert_scam ? 'Yes' : 'No'}\n`;
-            message += ` - Suspicious Keywords/Typos: ${response.details.keyword_scam ? 'Yes' : 'No'}`;
+            message += `Detailed Features:\n`;
+            for (const key in response.details) {
+                message += ` - ${key}: ${response.details[key]}\n`;
+            }
             
             alert(message);
         } catch (err) {
