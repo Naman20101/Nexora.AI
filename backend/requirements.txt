@@ -1,14 +1,16 @@
-fastapi
-uvicorn
-joblib
-pandas
+setuptools
+wheel
+fastapi==0.111.0
+uvicorn==0.30.1
+joblib==1.4.2
+pandas==2.2.2
 numpy==1.23.5
 scikit-learn==1.2.2
 requests
 python-whois
 beautifulsoup4
 tldextract
-requests
 idna
+
 
 
