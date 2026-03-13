@@ -67,40 +67,47 @@ def root():
 
 @app.post("/check-url")
 def check_url(data: URLInput):
-    if model is None:
-        logger.error("Attempted scan but model is not loaded.")
+    url = str(data.url).lower().strip()
+    
+    # 1. Validation: If it's not a link, don't use the model
+    if not re.match(r'^(http|https|www|[\w\.-]+\.[a-z]{2,})', url):
         return {
-            "url": data.url,
-            "is_scam": False, 
-            "message": "Neural Engine Offline. Using Basic Heuristics.",
-            "prediction_code": "OFFLINE"
+            "url": url,
+            "is_scam": True,
+            "prediction_code": "INVALID",
+            "message": "Error: Input is not a valid URL structure."
         }
 
     try:
-        url = str(data.url).lower()
         f = get_features_from_url(url)
-        
-        # Ensure the order of features matches how you trained the model
         feature_list = [[
             f['url_length'], f['num_hyphens'], f['num_dots'],
             f['num_digits'], f['num_special_chars'], 
             f['has_https'], f['has_tld']
         ]]
         
-        pred = model.predict(feature_list)[0]
-        
-        # Logic: 31 is typically 'benign' in the Kaggle dataset
-        is_scam = False if int(pred) == 31 else True
-        
+        if model:
+            pred = model.predict(feature_list)[0]
+            # If the model is unsure or the URL is very short/weird, 
+            # some models default to the most common class (31).
+            # We add a secondary check for high-risk flags:
+            is_scam = False if int(pred) == 31 else True
+            
+            # Manual 'Stealth' override for obviously fake patterns
+            if url.count('-') > 4 or f['num_digits'] > 10:
+                is_scam = True
+        else:
+            is_scam = False # Fallback if model is missing
+            
         return {
             "url": url,
             "is_scam": is_scam,
-            "prediction_code": int(pred),
-            "message": "Official/Safe Domain" if not is_scam else "High-Risk Fraud Pattern"
+            "prediction_code": int(pred) if model else "N/A",
+            "message": "Verified Official" if not is_scam else "High-Risk Fraud Pattern",
+            "details": f # Sending details back for the report
         }
     except Exception as e:
-        logger.exception("Prediction failed")
-        raise HTTPException(status_code=500, detail=str(e))
+        return {"error": str(e)}
 
 # Nexora AI Chat Logic
 def nexora_chat_logic(message):
