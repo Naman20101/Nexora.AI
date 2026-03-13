@@ -1,131 +1,238 @@
-body {
-  font-family: Arial, sans-serif;
-  background-color: #121212; /* Deep Charcoal Black */
-  color: #f0f0f0; /* Off-white for better readability */
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+:root {
+    --bg-dark: #020617;
+    --card-bg: #0f172a;
+    --accent-cyan: #22d3ee;
+    --accent-blue: #3b82f6;
+    --glass: rgba(15, 23, 42, 0.7);
+    --border: rgba(255, 255, 255, 0.1);
+    --danger: #ef4444;
+    --success: #10b981;
 }
 
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg-dark);
+    /* Subtle neon background glow */
+    background-image: 
+        radial-gradient(circle at 10% 20%, rgba(34, 211, 238, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 40%);
+    color: #f0f0f0;
+    height: 100vh;
+    overflow-x: hidden;
+    display: flex;
+}
+
+/* --- Main Layout Transitions --- */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+    transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+    overflow-y: auto;
+}
+
+.main-content.shrunk {
+    margin-right: 400px; /* Pushes content when chat opens */
+    opacity: 0.7;
+    transform: scale(0.98);
+}
+
+/* --- Header & Typography --- */
 header {
-  background-color: #1a1a1a;
-  width: 100%;
-  text-align: center;
-  padding: 2rem 0;
-  border-bottom: 2px solid #000;
+    text-align: center;
+    margin-bottom: 3rem;
+    padding-top: 2rem;
 }
 
 header h1 {
-  margin: 0;
-  color: #64b5f6; /* Blue Accent Color */
+    font-size: 3.5rem;
+    font-weight: 800;
+    letter-spacing: -3px;
+    background: linear-gradient(to right, var(--accent-cyan), var(--accent-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 10px rgba(34, 211, 238, 0.3));
 }
 
-header p.tagline {
-  margin: 0.5rem 0 0;
-  color: #999;
-  font-style: italic;
+.tagline {
+    color: #94a3b8;
+    font-style: italic;
+    font-size: 0.9rem;
+    margin-top: 10px;
 }
 
-main {
-  width: 90%;
-  max-width: 800px;
-  margin: 2rem 0;
-  padding: 2rem;
-  background-color: #1a1a1a;
-  border: 1px solid #333;
+/* --- Features Grid (The Glow Effect) --- */
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 900px;
+    margin-bottom: 3rem;
 }
 
-section {
-  margin-bottom: 2rem;
-  padding: 1.5rem;
-  background-color: #212121;
-  border: 1px solid #333;
+.feature-card {
+    background: var(--glass);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    text-align: center;
 }
 
-section h2 {
-  color: #64b5f6; /* Blue Accent Color */
-  border-bottom: 1px solid #64b5f6;
-  padding-bottom: 0.5rem;
-  margin-top: 0;
+.feature-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent-cyan);
+    box-shadow: 0 10px 30px rgba(34, 211, 238, 0.1);
 }
 
-input[type="text"],
-input[type="number"],
-textarea {
-  width: 100%;
-  padding: 0.75rem;
-  margin-bottom: 1rem;
-  border: 1px solid #333;
-  background-color: #1a1a1a;
-  color: #f0f0f0;
-  border-radius: 0;
-  box-sizing: border-box;
+.feature-card .icon { font-size: 2rem; display: block; margin-bottom: 10px; }
+.feature-card h3 { color: var(--accent-cyan); margin-bottom: 8px; font-size: 1rem; }
+.feature-card p { font-size: 0.85rem; color: #94a3b8; line-height: 1.4; }
+
+/* --- Scanner & Search Input Styling --- */
+.scanner-card {
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: 30px;
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 700px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    margin-bottom: 3rem;
 }
 
-button {
-  background-color: #64b5f6; /* Blue Accent Color */
-  color: #000;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 0;
-  cursor: pointer;
-  font-size: 1rem;
+.input-group {
+    display: flex;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 8px;
+    border-radius: 15px;
+    border: 1px solid var(--border);
 }
 
-button:hover {
-  background-color: #42a5f5;
+input[type="text"] {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: white;
+    padding: 12px;
+    font-size: 1rem;
 }
 
-#suggestions {
-  border: 1px solid #333;
-  max-height: 200px;
-  overflow-y: auto;
-  margin-top: -1rem;
+.scan-btn {
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+    color: var(--bg-dark);
+    border: none;
+    padding: 12px 25px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s;
 }
 
-.suggestion-item {
-  padding: 0.75rem;
-  border-bottom: 1px solid #282828;
+.scan-btn:hover {
+    box-shadow: 0 0 20px rgba(34, 211, 238, 0.4);
+    transform: scale(1.02);
 }
 
-.suggestion-item:hover {
-  background-color: #333;
+/* --- Side Chat Panel --- */
+.side-panel {
+    position: fixed;
+    right: -420px;
+    top: 0;
+    width: 400px;
+    height: 100%;
+    background: var(--glass);
+    backdrop-filter: blur(40px);
+    border-left: 1px solid var(--border);
+    transition: right 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
 }
 
-.suggestion-item a {
-  color: #64b5f6;
-  text-decoration: underline;
+.side-panel.open { right: 0; }
+
+.chat-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-/* Updated Features List with Glow Effect */
-.features ul {
-  list-style-type: none;
-  padding: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+.encryption-tag {
+    font-size: 0.65rem;
+    color: var(--accent-cyan);
+    letter-spacing: 1px;
+    opacity: 0.7;
 }
 
-.features li {
-  background-color: #212121;
-  border-left: 2px solid #64b5f6;
-  padding: 0.75rem;
-  border-radius: 0;
-  /* Add a smooth transition for the glow effect */
-  transition: box-shadow 0.3s ease-in-out;
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
-.features li:hover {
-  /* This is the black aura glow effect */
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-  transform: scale(1.02);
+.message {
+    padding: 12px 16px;
+    border-radius: 18px;
+    font-size: 0.9rem;
+    max-width: 80%;
+    line-height: 1.5;
 }
 
+.bot-msg { 
+    background: rgba(255, 255, 255, 0.05); 
+    align-self: flex-start; 
+    border-bottom-left-radius: 4px;
+}
+
+.user-msg { 
+    background: var(--accent-blue); 
+    align-self: flex-end; 
+    border-bottom-right-radius: 4px;
+}
+
+/* --- Floating Toggle --- */
+.chat-toggle {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 65px;
+    height: 65px;
+    background: var(--accent-cyan);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 101;
+    box-shadow: 0 10px 25px rgba(34, 211, 238, 0.4);
+    transition: 0.3s;
+}
+
+.chat-toggle:hover { transform: rotate(15deg) scale(1.1); }
+
+/* --- Footer --- */
 footer {
-  text-align: center;
-  padding: 1rem;
-  color: #999;
-  font-size: 0.8rem;
+    margin-top: auto;
+    padding: 2rem;
+    color: #475569;
+    font-size: 0.75rem;
 }
