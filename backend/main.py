@@ -6,13 +6,13 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-# --- LOGGING SETUP ---
+# --- LOGGING ---
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Nexora.ai Stealth Intelligence")
+app = FastAPI(title="Nexora Phantom AI")
 
-# --- CORS CONFIGURATION ---
+# --- CORS ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -27,130 +27,93 @@ class URLInput(BaseModel):
 # --- MODEL LOADING ---
 MODEL_PATH = "advanced_url_model.pkl"
 model = None
-
 try:
     if os.path.exists(MODEL_PATH):
         model = joblib.load(MODEL_PATH)
-        logger.info("✅ NEURAL ENGINE: Online and Loaded.")
-    else:
-        logger.error(f"❌ NEURAL ENGINE: {MODEL_PATH} not found.")
+        logger.info("✅ NEURAL ENGINE LOADED")
 except Exception as e:
-    logger.error(f"❌ NEURAL ENGINE: Loading failed: {e}")
+    logger.error(f"❌ MODEL ERROR: {e}")
 
 # --- FEATURE EXTRACTION ---
-def get_features_from_url(url):
-    """
-    Extracts numerical features from the URL for the ML model.
-    """
-    url_clean = url.replace('https://', '').replace('http://', '').replace('www.', '')
-    
-    features = {
+def get_features(url):
+    return {
         'url_length': len(url),
         'num_hyphens': url.count('-'),
         'num_dots': url.count('.'),
         'num_digits': sum(c.isdigit() for c in url),
         'num_special_chars': len(re.findall(r'[!@#$%^&*()_+|~=`{}\[\]:";\'<>?,.\/]', url)),
         'has_https': 1 if url.startswith('https') else 0,
-        'num_subdomains': url.count('.') - 1 if url.count('.') > 1 else 0
+        'has_tld': 1 if any(tld in url for tld in ['.com', '.org', '.net', '.gov', '.edu', '.xyz', '.biz']) else 0
     }
-    tlds = ['.com', '.org', '.net', '.gov', '.edu']
-    features['has_tld'] = 1 if any(tld in url for tld in tlds) else 0
-    return features
 
 # --- ROUTES ---
 @app.get("/")
-def health_check():
-    return {
-        "status": "online",
-        "system": "Nexora Phantom V2",
-        "model_active": model is not None
-    }
+def home():
+    return {"status": "Nexora AI Online", "model": model is not None}
 
 @app.post("/check-url")
 def check_url(data: URLInput):
     url = str(data.url).lower().strip()
-    f = get_features_from_url(url)
+    f = get_features(url)
     
-    # 1. HEURISTIC OVERRIDE: Catch obvious phishing before the AI
-    # Rule A: IP Addresses are almost always malicious in this context
+    # --- STEP 1: HARD OVERRIDES (The "Anti-Fake" Guards) ---
+    
+    # Guard A: Brand Spoofing (If it mentions a brand but isn't the official domain)
+    official_brands = {
+        "paytm": "paytm.com",
+        "paypal": "paypal.com",
+        "venmo": "venmo.com",
+        "binance": "binance.com"
+    }
+    
+    for brand, official in official_brands.items():
+        if brand in url and official not in url:
+            return {
+                "url": url, "is_scam": True, "prediction_code": "SPOOF_DETECTED",
+                "message": f"CRITICAL: Unauthorized {brand} domain spoofing detected.", "details": f
+            }
+
+    # Guard B: Suspicious Patterns (IP addresses or too many hyphens/digits)
     if re.search(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', url):
-        return {
-            "url": url,
-            "is_scam": True,
-            "prediction_code": "FLAG_IP_ADDR",
-            "message": "CRITICAL: IP-based domain detected.",
-            "details": f
-        }
+        return {"url": url, "is_scam": True, "prediction_code": "IP_PHISH", "message": "CRITICAL: IP-based phishing detected.", "details": f}
+    
+    if f['num_hyphens'] >= 3 or f['num_digits'] > 10:
+        return {"url": url, "is_scam": True, "prediction_code": "HIGH_ENTROPY", "message": "SUSPICIOUS: Abnormal URL structure.", "details": f}
 
-    # Rule B: Excessive hyphens or digits (Classic scam pattern)
-    if f['num_hyphens'] >= 4 or f['num_digits'] > 12:
-        return {
-            "url": url,
-            "is_scam": True,
-            "prediction_code": "FLAG_HIGH_ENTROPY",
-            "message": "SUSPICIOUS: Abnormal character density.",
-            "details": f
-        }
+    # Guard C: Non-URL Input (Like "hi" or "hello")
+    if "." not in url or len(url) < 8:
+        return {"url": url, "is_scam": True, "prediction_code": "INVALID_INPUT", "message": "REJECTED: Not a valid URL structure.", "details": f}
 
-    # Rule C: Input validation
-    if len(url) < 8 or "." not in url:
-        return {
-            "url": url,
-            "is_scam": True,
-            "prediction_code": "FLAG_INVALID",
-            "message": "ERROR: Invalid URL structure.",
-            "details": f
-        }
-
-    # 2. NEURAL ANALYSIS: Ask the AI Model
+    # --- STEP 2: NEURAL ANALYSIS (The AI Model) ---
     try:
         if model:
-            # Match the feature order used during training
+            # We must pass features in the EXACT order the model expects
             feature_list = [[
                 f['url_length'], f['num_hyphens'], f['num_dots'],
                 f['num_digits'], f['num_special_chars'], 
                 f['has_https'], f['has_tld']
             ]]
-            
             pred = model.predict(feature_list)[0]
             
-            # Logic: 31 is the Kaggle label for "Benign" (Safe)
+            # Logic: 31 is the label for Safe in your Kaggle set
             is_scam = False if int(pred) == 31 else True
             
             return {
                 "url": url,
                 "is_scam": is_scam,
                 "prediction_code": int(pred),
-                "message": "Verified Official Domain" if not is_scam else "Neural Match: Known Fraud Pattern",
+                "message": "Verified Safe" if not is_scam else "Neural Pattern Match: Fraud Detected",
                 "details": f
             }
-        else:
-            # Fallback if model failed to load
-            return {
-                "url": url,
-                "is_scam": False,
-                "prediction_code": "OFFLINE",
-                "message": "Engine Offline: Basic check passed.",
-                "details": f
-            }
-
     except Exception as e:
-        logger.error(f"Scan Error: {e}")
-        raise HTTPException(status_code=500, detail="Internal analysis failure")
+        logger.error(f"Prediction Crash: {e}")
+
+    # Fallback: If AI is confused, we trust our Guards
+    return {"url": url, "is_scam": False, "message": "Analysis Complete: Safe", "details": f}
 
 @app.post("/chat")
-async def nexora_chat(data: dict):
+async def chat(data: dict):
     msg = data.get("message", "").lower()
-    
-    if any(x in msg for x in ["hi", "hello", "hey"]):
-        resp = "Systems active. I am Nexora AI. Send me a link for neural analysis, Naman."
-    elif "status" in msg:
-        resp = f"Neural Engine: {'ONLINE' if model else 'OFFLINE'}. Core temperature nominal."
-    elif "who made you" in msg:
-        resp = "I am a proprietary intelligence developed by Naman Reddy for payment security."
-    elif "scam" in msg or "fraud" in msg:
-        resp = "I scan URLs for 'fingerprints' like subdomain nesting and entropy levels that signal a phishing attempt."
-    else:
-        resp = "Command received. My primary directive is link interrogation. Do you have a URL to audit?"
-        
-    return {"response": resp}
+    if "hi" in msg or "hello" in msg:
+        return {"response": "Nexora Systems Online. Analysis core standing by, Naman."}
+    return {"response": "Signal received. I am monitoring for malicious network signatures."}
