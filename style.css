@@ -169,3 +169,21 @@ input { flex: 1; background: transparent; border: none; color: white; padding: 1
 
 .loading-text { color: var(--accent-cyan); animation: pulse 1s infinite; }
 @keyframes pulse { 50% { opacity: 0.4; } }
+
+.report-btn {
+    margin-top: 15px;
+    background: transparent;
+    border: 1px solid var(--accent-cyan);
+    color: var(--accent-cyan);
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.report-btn:hover {
+    background: var(--accent-cyan);
+    color: black;
+    box-shadow: 0 0 15px var(--accent-cyan);
+}
