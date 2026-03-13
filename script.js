@@ -1,6 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
+    // 1. Backend Configuration
     const BACKEND = "https://nexora-ai-mk99.onrender.com";
 
+    // --- Helper for API calls ---
     async function postJSON(path, body) {
         const res = await fetch(BACKEND + path, {
             method: "POST",
@@ -15,58 +17,72 @@ document.addEventListener("DOMContentLoaded", () => {
         return await res.json();
     }
 
-    // URL Checker Section
-    document.getElementById("checkBtn").addEventListener("click", async () => {
-        try {
-            const url = document.getElementById("urlInput").value;
-            if (url.trim() === "") {
-                alert("Please enter a URL to check.");
-                return;
-            }
-            const response = await postJSON("/check-url", { url });
-            console.log("OK", response);
-            
-            let message = `URL: ${response.url}\n`;
-            message += `Final Verdict: ${response.is_scam ? 'Likely a Scam' : 'Looks Safe'}\n\n`;
-            message += `Detailed Features:\n`;
-            for (const key in response.details) {
-                message += ` - ${key}: ${response.details[key]}\n`;
-            }
-            
-            alert(message);
-        } catch (err) {
-            console.error("Request failed", err);
-            alert("Error: " + err.message);
+    // --- 2. UI Toggles & Transitions ---
+    window.toggleChat = function() {
+        const panel = document.getElementById('sidePanel');
+        const main = document.getElementById('mainArea');
+        panel.classList.toggle('open');
+        main.classList.toggle('shrunk');
+    };
+
+    // --- 3. Neural URL Scanner ---
+    window.scanURL = async function() {
+        const urlInput = document.getElementById('urlInput');
+        const display = document.getElementById('result-display');
+        const card = document.getElementById('scannerCard');
+        const url = urlInput.value.trim();
+
+        if (!url) {
+            display.innerHTML = `<span style="color: #ef4444">Please enter a URL first.</span>`;
+            return;
         }
-    });
 
-    // Prediction Endpoint Section
-    document.getElementById("predictBtn").addEventListener("click", async () => {
+        display.innerHTML = `<span style="color: #22d3ee">Analyzing neural patterns...</span>`;
+        card.style.borderColor = "rgba(34, 211, 238, 0.5)";
+
         try {
-            const feature1 = parseFloat(document.getElementById("feature1Input").value);
-            const feature2 = parseFloat(document.getElementById("feature2Input").value);
-            const feature3 = parseFloat(document.getElementById("feature3Input").value);
+            const data = await postJSON("/check-url", { url });
             
-            if (isNaN(feature1) || isNaN(feature2) || isNaN(feature3)) {
-                alert("Please enter valid numbers for all features.");
-                return;
+            if (data.is_scam) {
+                display.innerHTML = `<span style="color: #ef4444; font-weight: 800;">⚠️ THREAT DETECTED: SUSPICIOUS URL</span>`;
+                card.style.borderColor = "#ef4444";
+                card.style.boxShadow = "0 0 40px rgba(239, 68, 68, 0.3)";
+            } else {
+                display.innerHTML = `<span style="color: #10b981; font-weight: 800;">✅ CLEAR: OFFICIAL/SAFE DOMAIN</span>`;
+                card.style.borderColor = "#10b981";
+                card.style.boxShadow = "0 0 40px rgba(16, 185, 129, 0.3)";
             }
-
-            const response = await postJSON("/predict", { 
-                feature1: feature1,
-                feature2: feature2,
-                feature3: feature3
-            });
-            console.log("Prediction OK", response);
-            alert("Prediction Result: " + JSON.stringify(response));
-
         } catch (err) {
-            console.error("Prediction request failed", err);
-            alert("Error: " + err.message);
+            console.error("Scan failed", err);
+            display.innerHTML = `<span style="color: #ef4444">Error: Connection to Neural Link lost.</span>`;
         }
-    });
+    };
 
-    // Search Functionality
+    // --- 4. Nexora AI Chat Logic ---
+    window.sendMessage = async function() {
+        const input = document.getElementById('chatInput');
+        const chatBox = document.getElementById('chatBox');
+        const msg = input.value.trim();
+
+        if (!msg) return;
+
+        // Display User Message
+        chatBox.innerHTML += `<div class="message user-msg">${msg}</div>`;
+        input.value = '';
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        try {
+            const data = await postJSON("/chat", { message: msg });
+            
+            // Display AI Response
+            chatBox.innerHTML += `<div class="message bot-msg">${data.response}</div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+        } catch (e) {
+            chatBox.innerHTML += `<div class="message bot-msg">System error: Unable to reach AI core.</div>`;
+        }
+    };
+
+    // --- 5. Payment App Search Logic ---
     const paymentApps = [
         { name: "Paytm", country: "India", website: "https://paytm.com" },
         { name: "PhonePe", country: "India", website: "https://www.phonepe.com" },
@@ -88,9 +104,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const query = e.target.value.toLowerCase();
         suggestionsDiv.innerHTML = "";
         
-        if (query.length < 2) {
-            return;
-        }
+        if (query.length < 2) return;
 
         const filteredApps = paymentApps.filter(app => 
             app.name.toLowerCase().includes(query) ||
@@ -101,11 +115,25 @@ document.addEventListener("DOMContentLoaded", () => {
             filteredApps.forEach(app => {
                 const appElement = document.createElement("div");
                 appElement.classList.add("suggestion-item");
-                appElement.innerHTML = `<strong>${app.name}</strong> - ${app.country} <a href="${app.website}" target="_blank">Visit Site</a>`;
+                appElement.innerHTML = `
+                    <div style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer;" 
+                         onclick="window.open('${app.website}', '_blank')">
+                        <strong style="color: #22d3ee">${app.name}</strong> 
+                        <span style="font-size: 0.8rem; color: #94a3b8;">(${app.country})</span>
+                    </div>`;
                 suggestionsDiv.appendChild(appElement);
             });
         } else {
-            suggestionsDiv.innerHTML = "No apps found.";
+            suggestionsDiv.innerHTML = `<div style="padding: 10px; color: #64748b;">No matching apps found.</div>`;
         }
+    });
+
+    // --- 6. Event Listeners for Keyboard ---
+    document.getElementById('urlInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') scanURL();
+    });
+
+    document.getElementById('chatInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
     });
 });
