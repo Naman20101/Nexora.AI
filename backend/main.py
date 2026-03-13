@@ -209,3 +209,103 @@ def check_url(data: URLInput):
 async def nexora_chat(data: dict):
     user_input = data.get("message", "").lower()
     return {"response": "Nexora AI actively monitoring network signatures."}
+import logging
+import os
+import re
+import joblib
+import math
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+
+# --- INITIALIZATION ---
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="Nexora Titan-Core V6")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+class URLInput(BaseModel):
+    url: str
+
+# --- ML ENGINE LOAD ---
+MODEL_PATH = "advanced_url_model.pkl"
+model = None
+try:
+    if os.path.exists(MODEL_PATH):
+        model = joblib.load(MODEL_PATH)
+except Exception as e:
+    logger.error(f"Core load error: {e}")
+
+# --- MATH UTILITIES ---
+def get_similarity(s1, s2):
+    """Calculates how close two words are. Catching 'payapk' vs 'paypal'."""
+    s1, s2 = s1.lower(), s2.lower()
+    if len(s1) < len(s2): s1, s2 = s2, s1
+    if len(s2) == 0: return len(s1)
+    
+    previous_row = range(len(s2) + 1)
+    for i, c1 in enumerate(s1):
+        current_row = [i + 1]
+        for j, c2 in enumerate(s2):
+            insertions = previous_row[j + 1] + 1
+            deletions = current_row[j] + 1
+            substitutions = previous_row[j] + (c1 != c2)
+            current_row.append(min(insertions, deletions, substitutions))
+        previous_row = current_row
+    
+    return previous_row[-1]
+
+# --- THE SCANNER ---
+@app.post("/check-url")
+def check_url(data: URLInput):
+    url = str(data.url).lower().strip()
+    
+    # 1. THE OFFICIAL WHITELIST
+    # If it's your site or a known giant, it's safe.
+    whitelist = ["vercel.app", "onrender.com", "github.io", "google.com", "paytm.com", "paypal.com"]
+    if any(domain in url for domain in whitelist):
+        return {"url": url, "is_scam": False, "message": "Verified Safe Source"}
+
+    # 2. THE SIMILARITY GUARD (The "Payapk" Killer)
+    # This catches words that look like brands but aren't.
+    target_brands = ["paypal", "paytm", "amazon", "netflix", "sbi", "hdfc", "binance", "phonepe", "google"]
+    
+    # Clean the URL to find the main "word" (e.g., payapk.com -> payapk)
+    domain_part = url.split('//')[-1].split('/')[0].split('.')[0]
+    
+    for brand in target_brands:
+        dist = get_similarity(domain_part, brand)
+        # If the word is 1 or 2 letters away from a big brand, it's a scam.
+        if 0 < dist <= 2:
+            return {
+                "url": url, "is_scam": True, "prediction_code": "SIMILARITY_MATCH",
+                "message": f"THREAT: Visual imitation of {brand.upper()} detected."
+            }
+
+    # 3. STRUCTURAL RED FLAGS
+    if url.count('-') >= 3 or sum(c.isdigit() for c in url) > 8:
+        return {"url": url, "is_scam": True, "prediction_code": "STRUCT_ANOMALY", "message": "THREAT: Suspicious URL architecture."}
+
+    # 4. NEURAL CORE (The ML Model)
+    try:
+        if model:
+            # Re-calculating features for the model
+            feat = [len(url), url.count('-'), url.count('.'), sum(c.isdigit() for c in url), 
+                    len(re.findall(r'[!@#$%^&*()]', url)), 1 if 'https' in url else 0, 1]
+            pred = model.predict([feat])[0]
+            
+            is_scam = False if int(pred) == 31 else True
+            if is_scam:
+                return {"url": url, "is_scam": True, "prediction_code": str(pred), "message": "AI Match: Malicious Pattern Detected."}
+    except:
+        pass
+
+    return {"url": url, "is_scam": False, "message": "Analysis Complete: Safe"}
