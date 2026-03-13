@@ -1,58 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Nexora.ai - Global Payment App Search</title>
-  <link rel="stylesheet" href="style.css"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexora.ai | Global Fraud Intelligence</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>Nexora.ai</h1>
-    <p class="tagline">AI-Powered Payment Finder – Built by Naman Reddy </p>
-  </header>
 
-  <main>
-    <section class="features">
-      <h2>Core Features</h2>
-      <ul>
-        <li>🧠 **High-Fidelity AI Model:** Trained on a large dataset of 284,807 transactions for accurate fraud detection.</li>
-        <li>🔍 **Smart Payment App Search:** Find official payment app websites from around the globe.</li>
-        <li>🔗 **Official Link Validation:** Verify official payment app domains in real-time.</li>
-        <li>🔐 **Scam Link and Message Checker:** Analyze URLs for potential phishing or scam risks.</li>
-      </ul>
-    </section>
+    <div class="main-content" id="mainArea">
+        <header>
+            <div class="logo-container">
+                <h1>NEXORA.AI</h1>
+                <p class="tagline">AI-Powered Payment Finder – Built by Naman Reddy</p>
+            </div>
+        </header>
 
-    <section class="search-section">
-      <h2>Search for a Payment App</h2>
-      <input type="text" id="searchInput" placeholder="Search for a payment app..." />
-      <div id="suggestions"></div>
-    </section>
+        <main>
+            <section class="features-grid">
+                <div class="feature-card">
+                    <span class="icon">🧠</span>
+                    <h3>Neural Model</h3>
+                    <p>Trained on 284,807+ transactions for high-fidelity detection.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="icon">🔍</span>
+                    <h3>Smart Search</h3>
+                    <p>Locate official global payment gateways instantly.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="icon">🔗</span>
+                    <h3>Validation</h3>
+                    <p>Real-time verification of official financial domains.</p>
+                </div>
+            </section>
 
-    <section class="url-checker">
-      <h2>Check for Scam Links</h2>
-      <input type="text" id="urlInput" placeholder="Paste the URL here..." />
-      <button id="checkBtn">Check</button>
-      <p id="urlResult"></p>
-    </section>
+            <section class="scanner-section">
+                <div class="scanner-card" id="scannerCard">
+                    <h2>Neural URL Analysis</h2>
+                    <p class="instruction">Analyze links for phishing or scam signatures.</p>
+                    <div class="input-group">
+                        <input type="text" id="urlInput" placeholder="Paste suspicious URL or payment link here...">
+                        <button class="scan-btn" onclick="scanURL()">SCAN</button>
+                    </div>
+                    <div id="result-display">System ready for input.</div>
+                </div>
+            </section>
 
-    <section class="prediction-checker">
-      <h2>Test Your Prediction Model</h2>
-      <label for="feature1Input">Feature 1:</label>
-      <input type="number" id="feature1Input" value="0.5" />
-      <label for="feature2Input">Feature 2:</label>
-      <input type="number" id="feature2Input" value="10" />
-      <label for="feature3Input">Feature 3:</label>
-      <input type="number" id="feature3Input" value="1.2" />
-      <button id="predictBtn">Get Prediction</button>
-      <div id="predictionResult"></div>
-    </section>
-  </main>
+            <section class="search-section">
+                <h3>Payment App Registry</h3>
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Search for a payment app (e.g., PayPal, Venmo)...">
+                    <div id="suggestions"></div>
+                </div>
+            </section>
+        </main>
 
-  <footer>
-    <p>© 2025 Nexora.ai – All rights reserved.</p>
-  </footer>
+        <footer>
+            <p>© 2026 Nexora.ai – All rights reserved.</p>
+        </footer>
+    </div>
 
-  <script src="script.js"></script>
+    <div class="side-panel" id="sidePanel">
+        <div class="chat-header">
+            <div class="chat-title">
+                <h3>Nexora Assistant</h3>
+                <span class="status-dot"></span>
+                <span class="status-text">ONLINE</span>
+            </div>
+            <span class="encryption-tag">256-BIT ENCRYPTED</span>
+        </div>
+        <div class="chat-messages" id="chatBox">
+            <div class="message bot-msg">Hello. I am Nexora AI. I can help you verify links or explain fraud patterns. How can I assist?</div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="Ask Nexora anything...">
+            <button class="send-btn" onclick="sendMessage()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="chat-toggle" onclick="toggleChat()" title="Open Nexora AI">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
