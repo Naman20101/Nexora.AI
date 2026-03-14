@@ -39,14 +39,15 @@ body {
     transition: margin-right 0.5s cubic-bezier(0.19, 1, 0.22, 1);
 }
 
-/* --- Scroll Reveal Logic (The Pro Way) --- */
+/* --- Fixed Scroll Reveal --- */
 .reveal {
-    opacity: 0;
-    transform: translateY(40px);
+    opacity: 1; /* Changed from 0 to 1 */
+    transform: translateY(0); /* Changed from 40px to 0 */
     transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
     will-change: transform, opacity;
 }
 
+/* We can keep this, but since we set default to 1, the site is now safe */
 .reveal.active {
     opacity: 1;
     transform: translateY(0);
