@@ -3,13 +3,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const synth = window.speechSynthesis;
     let shouldSpeakResponse = false; 
 
-    // --- REVEAL SAFETY ---
-    const forceShow = () => {
-        document.querySelectorAll('.reveal').forEach(el => el.classList.add('active'));
-    };
-    forceShow();
+    // REVEAL FIX
+    document.querySelectorAll('.reveal').forEach(el => el.classList.add('active'));
 
-    // --- UI CONTROLS ---
     window.toggleChat = () => {
         document.getElementById('sidePanel')?.classList.toggle('open');
     };
@@ -27,7 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.startVoice = function() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) return alert("Voice not supported.");
+        if (!SpeechRecognition) return;
         const recognition = new SpeechRecognition();
         recognition.onstart = () => {
             document.getElementById('micBtn')?.classList.add('listening');
@@ -40,7 +36,6 @@ document.addEventListener("DOMContentLoaded", () => {
         recognition.start();
     };
 
-    // --- CHAT ENGINE ---
     window.sendChatMessage = async function(isFromVoice = false) {
         const input = document.getElementById('chatInput');
         const box = document.getElementById('chatBox');
@@ -79,25 +74,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             window.nexoraSpeak(fullText);
         } catch (err) {
-            aiDiv.querySelector('.ai-content').innerText = "System offline. Wake up Render.";
+            aiDiv.querySelector('.ai-content').innerText = "System offline.";
         }
-    };
-
-    // --- SCANNER ---
-    window.scanURL = async function() {
-        const urlIn = document.getElementById('urlInput');
-        const display = document.getElementById('result-display');
-        if (!urlIn || !display) return;
-        display.innerHTML = "INTERROGATING NEURAL CORE...";
-        try {
-            const res = await fetch(`${BACKEND}/check-url`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ url: urlIn.value })
-            });
-            const data = await res.json();
-            display.innerHTML = data.is_scam ? `⚠️ ${data.message}` : `✅ SECURE`;
-        } catch (e) { display.innerHTML = "Offline."; }
     };
 
     document.getElementById('chatInput')?.addEventListener('keypress', (e) => {
