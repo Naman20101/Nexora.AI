@@ -124,18 +124,23 @@ def check_url(data: URLInput):
     return {"url": url, "is_scam": False, "message": "Analysis complete: No immediate threats."}
 
 # --- THE AI CHAT ENGINE ---
+from fastapi.responses import StreamingResponse
+import json
+
 @app.post("/chat")
 async def chat_handler(data: ChatInput):
-    try:
-        completion = AI_CLIENT.chat.completions.create(
+    def generate():
+        # This tells NVIDIA to send data as it's generated
+        stream = AI_CLIENT.chat.completions.create(
             model="meta/llama-3.1-405b-instruct",
             messages=[
-                {"role": "system", "content": "You are Nexora AI, a cold, elite cyber-security entity created by Naman Reddy. Analyze threats and keep responses concise and technical. No emojis."},
+                {"role": "system", "content": "You are Nexora AI. Be elite, concise, and technical. No emojis."},
                 {"role": "user", "content": data.message}
             ],
-            max_tokens=256
+            stream=True 
         )
-        return {"response": completion.choices[0].message.content}
-    except Exception as e:
-        logger.error(f"AI Error: {e}")
-        return {"response": "Neural link unstable. Manual override engaged."}
+        for chunk in stream:
+            if chunk.choices[0].delta.content:
+                yield chunk.choices[0].delta.content
+
+    return StreamingResponse(generate(), media_type="text/plain")
