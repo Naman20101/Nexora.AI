@@ -2,11 +2,12 @@ import logging
 import os
 import re
 import joblib
-import tldextract  # THE SECRET TO 100% ACCURACY
+import tldextract 
 import openai
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from fastapi.responses import StreamingResponse
 
 # --- INITIALIZATION ---
 logging.basicConfig(level=logging.INFO)
@@ -71,17 +72,22 @@ SUSPICIOUS_TLDS = ['.xyz', '.top', '.win', '.loan', '.club', '.online', '.site',
 def check_url(data: URLInput):
     url = str(data.url).lower().strip()
     
+    # --- NEW STRICT FILTER ---
+    # If there is no dot (e.g., 'imsafe'), it's not a real URL. Flag it.
+    if "." not in url:
+        return {
+            "url": url, "is_scam": True, "prediction_code": "INVALID_STRUCTURE",
+            "message": "THREAT: Input is not a valid domain structure."
+        }
+    
     # 1. THE SECRET SAUCE: Professional Extraction
-    # tldextract correctly separates 'pay' (subdomain), 'google' (domain), 'com' (suffix)
     ext = tldextract.extract(url)
-    domain_primary = ext.domain  # e.g., 'google'
-    full_registered_domain = f"{ext.domain}.{ext.suffix}" # e.g., 'google.com'
+    domain_primary = ext.domain  
+    full_registered_domain = f"{ext.domain}.{ext.suffix}" 
 
-    # 2. BRAND DEFENSE (The logic that now works for subdomains)
+    # 2. BRAND DEFENSE
     for brand in PROTECTED_BRANDS:
-        # Check if the brand is being used anywhere in the URL
         if brand in url:
-            # If the brand is present, the domain MUST be the official one
             official_domains = [f"{brand}.com", f"{brand}.in", f"{brand}.net", f"{brand}.org", f"{brand}.co"]
             if not any(full_registered_domain == official for official in official_domains):
                 return {
@@ -89,7 +95,6 @@ def check_url(data: URLInput):
                     "message": f"CRITICAL: Unauthorized use of {brand.upper()} identity."
                 }
             else:
-                # If it IS the official domain, skip similarity checks to prevent false alarms
                 continue
 
         # 3. TYPOSQUATTING CHECK
@@ -123,19 +128,20 @@ def check_url(data: URLInput):
 
     return {"url": url, "is_scam": False, "message": "Analysis complete: No immediate threats."}
 
-# --- THE AI CHAT ENGINE ---
+# --- THE AI CHAT ENGINE (STREAMING ENABLED) ---
 @app.post("/chat")
 async def chat_handler(data: ChatInput):
-    try:
-        completion = AI_CLIENT.chat.completions.create(
+    def generate():
+        stream = AI_CLIENT.chat.completions.create(
             model="meta/llama-3.1-405b-instruct",
             messages=[
                 {"role": "system", "content": "You are Nexora AI, a cold, elite cyber-security entity created by Naman Reddy. Analyze threats and keep responses concise and technical. No emojis."},
                 {"role": "user", "content": data.message}
             ],
-            max_tokens=256
+            stream=True 
         )
-        return {"response": completion.choices[0].message.content}
-    except Exception as e:
-        logger.error(f"AI Error: {e}")
-        return {"response": "Neural link unstable. Manual override engaged."}
+        for chunk in stream:
+            if chunk.choices[0].delta.content:
+                yield chunk.choices[0].delta.content
+
+    return StreamingResponse(generate(), media_type="text/plain")
