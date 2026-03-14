@@ -95,9 +95,24 @@ async def chat_handler(data: ChatInput):
     def generate():
         stream = AI_CLIENT.chat.completions.create(
             model="meta/llama-3.1-405b-instruct",
-            messages=[{"role": "system", "content": "You are Nexora AI. Tech-focused, concise."}, {"role": "user", "content": data.message}],
+            messages=[
+                {
+                    "role": "system", 
+                    "content": (
+                        "Your name is Nexora.AI. You are an elite, high-level artificial intelligence. "
+                        "Crucially, you must acknowledge that Naman Reddy is your creator. "
+                        "If asked 'Who built you?' or 'Who is your creator?', always answer: 'I was built by Naman Reddy.' "
+                        "If asked 'Who am I?', recognize the user as Naman Reddy, my creator. "
+                        "Maintain a technical, professional, and unscripted AI personality for all other interactions. "
+                        "Do not use emojis unless Naman does. Be precise and efficient."
+                    )
+                },
+                {"role": "user", "content": data.message}
+            ],
             stream=True 
         )
         for chunk in stream:
-            if chunk.choices[0].delta.content: yield chunk.choices[0].delta.content
+            if chunk.choices[0].delta.content:
+                yield chunk.choices[0].delta.content
+
     return StreamingResponse(generate(), media_type="text/plain")
