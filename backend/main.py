@@ -25,10 +25,11 @@ app.add_middleware(
 class URLInput(BaseModel):
     url: str
 
+# --- DATA MODEL FOR CHAT ---
 class ChatInput(BaseModel):
     message: str
 
-# --- NVIDIA AI BRAIN CONFIGURATION ---
+# --- NVIDIA AI CONFIGURATION ---
 AI_CLIENT = openai.OpenAI(
     base_url="https://integrate.api.nvidia.com/v1",
     api_key="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"
@@ -74,12 +75,15 @@ def check_url(data: URLInput):
     url = str(data.url).lower().strip()
     
     # 1. CLEANING THE DOMAIN
+    # Removes http, https, www and splits to get just the domain (e.g., payapk.com -> payapk)
     clean_domain = url.replace('https://','').replace('http://','').replace('www.','').split('/')[0]
     domain_primary = clean_domain.split('.')[0]
 
     # 2. THE BRAND DEFENSE (The "Payapk" Killer)
     for brand in PROTECTED_BRANDS:
+        # Check if the brand is in the URL at all
         if brand in url:
+            # If the brand is present, it MUST be the official domain
             official_domains = [f"{brand}.com", f"{brand}.in", f"{brand}.net", f"{brand}.org", f"{brand}.co"]
             if not any(official in clean_domain for official in official_domains):
                 return {
@@ -87,7 +91,9 @@ def check_url(data: URLInput):
                     "message": f"CRITICAL: Unauthorized use of {brand.upper()} identity."
                 }
         
+        # Check for Typosquatting (Similarity)
         distance = get_levenshtein_distance(domain_primary, brand)
+        # If the domain is 1 or 2 characters away from a famous brand, it's a scam.
         if 0 < distance <= 2:
             return {
                 "url": url, "is_scam": True, "prediction_code": "SIMILARITY_THREAT",
@@ -95,19 +101,23 @@ def check_url(data: URLInput):
             }
 
     # 3. HEURISTIC RED FLAGS
+    # IP Addresses
     if re.search(r'\d{1,3}\.\d{1,3}\.\d{1,3}', url):
         return {"url": url, "is_scam": True, "prediction_code": "IP_HOSTING", "message": "THREAT: Malicious IP-based hosting."}
     
+    # Dangerous TLDs combined with many digits
     if any(tld in url for tld in SUSPICIOUS_TLDS) or sum(c.isdigit() for c in url) > 7:
         return {"url": url, "is_scam": True, "prediction_code": "HIGH_RISK_PATTERN", "message": "THREAT: Suspicious URL architecture."}
 
     # 4. NEURAL INFERENCE
     try:
         if model:
+            # Feature extraction for AI
             feat = [len(url), url.count('-'), url.count('.'), sum(c.isdigit() for c in url), 
                     len(re.findall(r'[^a-zA-Z0-9]', url)), 1 if 'https' in url else 0, 1]
             pred = model.predict([feat])[0]
             
+            # If AI says safe but we have hyphens or extra dots, override
             is_scam = False if int(pred) == 31 else True
             if not is_scam and (url.count('-') > 2 or url.count('.') > 3):
                 is_scam = True
@@ -122,10 +132,11 @@ def check_url(data: URLInput):
 
     return {"url": url, "is_scam": False, "message": "Analysis complete: No immediate threats."}
 
-# --- THE REAL AI ASSISTANT (NVIDIA NIM POWERED) ---
+# --- THE AI CHAT ENGINE ---
 @app.post("/chat")
 async def chat_handler(data: ChatInput):
     try:
+        # Fixed model name for NVIDIA NIM
         completion = AI_CLIENT.chat.completions.create(
             model="meta/llama-3.1-405b-instruct",
             messages=[
@@ -135,12 +146,14 @@ async def chat_handler(data: ChatInput):
                 },
                 {"role": "user", "content": data.message}
             ],
-            max_tokens=200
+            temperature=0.2,
+            top_p=0.7,
+            max_tokens=256
         )
         return {"response": completion.choices[0].message.content}
     except Exception as e:
-        logger.error(f"AI Brain Error: {e}")
-        return {"response": "Neural link unstable. Directing to local backup: How can I help?"}
+        logger.error(f"AI Error: {e}")
+        return {"response": "Neural link unstable. Manual override: How can I assist?"}
 
 # --- RENDER DEPLOYMENT ---
 if __name__ == "__main__":
