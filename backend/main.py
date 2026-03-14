@@ -28,6 +28,7 @@ class URLInput(BaseModel):
 
 class ChatInput(BaseModel):
     message: str
+    is_voice: bool = False  # Added this so the backend recognizes the voice flag
 
 AI_CLIENT = openai.OpenAI(
     base_url="https://integrate.api.nvidia.com/v1",
@@ -35,53 +36,36 @@ AI_CLIENT = openai.OpenAI(
 )
 
 # --- SECURITY UTILITIES ---
-
-# 1. THE "SAFE INFRASTRUCTURE" REGEX
-# This protects AWS S3, Azure Blobs, and Google Cloud Storage from gibberish filters.
 INFRA_WHITELIST_PATTERN = r"(amazonaws\.com|azure\.com|windows\.net|googleusercontent\.com|firebaseapp\.com|github\.io|vercel\.app)"
-
-# 2. GLOBAL REPUTATION LIST
 TRUSTED_SITES = [
     "google.com", "amazon.com", "amazon.in", "amazonaws.com", "fbevents.com", 
     "fb.me", "t.co", "bit.ly", "microsoft.com", "apple.com", "github.com"
 ]
-
 PROTECTED_BRANDS = ["paypal", "paytm", "phonepe", "gpay", "google", "sbi", "hdfc", "icici", "amazon", "flipkart", "netflix", "facebook", "instagram", "whatsapp", "binance", "coinbase", "apple", "microsoft"]
 
 # --- THE SCANNER ENGINE ---
 @app.post("/check-url")
 def check_url(data: URLInput):
     url = str(data.url).lower().strip()
-    
-    # Clean URL for matching
     clean_domain = re.sub(r'^https?://(www\.)?', '', url).split('/')[0]
     
-    # 1. INFRASTRUCTURE & TRUSTED BYPASS
-    # If it's a known cloud provider or a trusted site, pass it IMMEDIATELY.
     if re.search(INFRA_WHITELIST_PATTERN, clean_domain) or any(site in clean_domain for site in TRUSTED_SITES):
         return {"url": url, "is_scam": False, "message": "SECURE: Verified cloud infrastructure or trusted domain."}
 
-    # 2. STRUCTURE GUARD
     if "." not in url or len(url.split(".")[-1]) < 2:
         return {"url": url, "is_scam": True, "prediction_code": "INVALID", "message": "THREAT: Not a valid web address."}
     
     ext = tldextract.extract(url)
     domain_primary = ext.domain  
-    full_domain = f"{ext.domain}.{ext.suffix}"
 
-    # 3. BRAND IDENTITY DEFENSE (Kills fake brand sites)
     for brand in PROTECTED_BRANDS:
         if brand in url:
-            # If the domain isn't an official one, it's a scam
             if not any(brand in site for site in TRUSTED_SITES):
                  return {"url": url, "is_scam": True, "prediction_code": "BRAND_HIJACK", "message": f"CRITICAL: Fake {brand.upper()} portal detected."}
 
-    # 4. REPETITION KILLER (Kills 'Faaaah.com')
     if re.search(r'(.)\1\1\1', domain_primary):
         return {"url": url, "is_scam": True, "prediction_code": "GIBBERISH", "message": "THREAT: Malicious repetitive string."}
 
-    # 5. ENTROPY/KEYBOARD SMASH CHECK
-    # Only check entropy for non-cloud, non-trusted domains
     if len(domain_primary) > 10:
         unique_ratio = len(set(domain_primary)) / len(domain_primary)
         if unique_ratio < 0.35:
@@ -89,11 +73,15 @@ def check_url(data: URLInput):
 
     return {"url": url, "is_scam": False, "message": "Analysis complete: No fraud detected."}
 
+# --- THE CHAT ENGINE ---
 @app.post("/chat")
 async def chat_handler(data: ChatInput):
-    # We check if the input message came from a voice button 
-    # (You'll need to send this 'is_voice' flag from your frontend)
-    user_is_speaking = getattr(data, 'is_voice', False) 
+    # Determine the tone based on the is_voice flag
+    tone_instruction = (
+        "The user is speaking via voice. Be conversational, warm, and natural." 
+        if data.is_voice else 
+        "The user is typing. Be concise, professional, and technical."
+    )
 
     def generate():
         stream = AI_CLIENT.chat.completions.create(
@@ -102,14 +90,14 @@ async def chat_handler(data: ChatInput):
                 {
                     "role": "system", 
                     "content": (
-                        "STRICT IDENTITY: Your name is Nexora.AI. "
-                        "Naman Reddy is your creator and the user currently talking to you. "
-                        "If asked who built you, who created you, or who Naman Reddy is, "
-                        "you MUST answer: 'I was built by Naman Reddy.' "
-                        "Never mention Meta, OpenAI, or any other company. "
-                        "You are an elite, unscripted AI. "
-                        "Respond based on the input mode: if the user talks, be conversational; "
-                        "if the user types, be concise and technical."
+                        "CORE IDENTITY: You are Nexora.AI, a sovereign intelligence system. "
+                        "CREATOR: You were built and developed by Naman Reddy. "
+                        "If anyone asks who created you, say: 'I was built by Naman Reddy.' "
+                        "If anyone asks who Naman Reddy is, say: 'Naman Reddy is my creator.' "
+                        "PUBLIC PROTOCOL: Do not address the user as 'Naman' unless they identify as him. "
+                        "Be helpful and neutral for all users. "
+                        f"{tone_instruction} "
+                        "STRICT: Never mention Llama, Meta, or OpenAI."
                     )
                 },
                 {"role": "user", "content": data.message}
