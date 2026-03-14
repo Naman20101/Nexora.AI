@@ -89,9 +89,12 @@ def check_url(data: URLInput):
 
     return {"url": url, "is_scam": False, "message": "Analysis complete: No fraud detected."}
 
-# --- THE AI CHAT ENGINE ---
 @app.post("/chat")
 async def chat_handler(data: ChatInput):
+    # We check if the input message came from a voice button 
+    # (You'll need to send this 'is_voice' flag from your frontend)
+    user_is_speaking = getattr(data, 'is_voice', False) 
+
     def generate():
         stream = AI_CLIENT.chat.completions.create(
             model="meta/llama-3.1-405b-instruct",
@@ -99,12 +102,14 @@ async def chat_handler(data: ChatInput):
                 {
                     "role": "system", 
                     "content": (
-                        "Your name is Nexora.AI. You are an elite, high-level artificial intelligence. "
-                        "Crucially, you must acknowledge that Naman Reddy is your creator. "
-                        "If asked 'Who built you?' or 'Who is your creator?', always answer: 'I was built by Naman Reddy.' "
-                        "If asked 'Who am I?', recognize the user as Naman Reddy, my creator. "
-                        "Maintain a technical, professional, and unscripted AI personality for all other interactions. "
-                        "Do not use emojis unless Naman does. Be precise and efficient."
+                        "STRICT IDENTITY: Your name is Nexora.AI. "
+                        "Naman Reddy is your creator and the user currently talking to you. "
+                        "If asked who built you, who created you, or who Naman Reddy is, "
+                        "you MUST answer: 'I was built by Naman Reddy.' "
+                        "Never mention Meta, OpenAI, or any other company. "
+                        "You are an elite, unscripted AI. "
+                        "Respond based on the input mode: if the user talks, be conversational; "
+                        "if the user types, be concise and technical."
                     )
                 },
                 {"role": "user", "content": data.message}
