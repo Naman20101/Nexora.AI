@@ -4,7 +4,7 @@ import re
 import joblib
 import tldextract 
 import openai
-import socket
+import socket  # Added for real-world web verification
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -61,8 +61,8 @@ def get_levenshtein_distance(s1: str, s2: str) -> int:
         previous_row = current_row
     return previous_row[-1]
 
-def verify_dns(hostname: str) -> bool:
-    """Checks if the domain actually exists on the web."""
+def domain_exists(hostname: str) -> bool:
+    """The Ultimate Test: Does this domain actually exist on the web?"""
     try:
         socket.gethostbyname(hostname)
         return True
@@ -77,9 +77,13 @@ TRUSTED_TLDS = ['com', 'in', 'net', 'org', 'co', 'gov', 'edu', 'io', 'me', 'info
 def check_url(data: URLInput):
     url = str(data.url).lower().strip()
     
-    # 1. HARD STRUCTURE CHECK
-    if "." not in url or url.count(".") < 1 or len(url.split(".")[-1]) < 2:
-        return {"url": url, "is_scam": True, "prediction_code": "INVALID_URL", "message": "THREAT: Input is not a valid web address."}
+    # 1. HARD STRUCTURE GATEKEEPER
+    # Kills "Nahbri", "Imsafw", and everything without a dot extension
+    if "." not in url or len(url.split(".")[-1]) < 2:
+        return {
+            "url": url, "is_scam": True, "prediction_code": "INVALID_STRUCTURE",
+            "message": "THREAT: Input is not a valid URL. Registered domain required."
+        }
     
     # 2. EXTRACTION
     ext = tldextract.extract(url)
@@ -87,48 +91,47 @@ def check_url(data: URLInput):
     suffix = ext.suffix
     full_domain = f"{ext.domain}.{ext.suffix}"
 
-    # 3. DNS VERIFICATION (The "Does it Exist" Test)
-    if not verify_dns(full_domain):
-        return {"url": url, "is_scam": True, "prediction_code": "NON_EXISTENT_DOMAIN", "message": "THREAT: Domain does not exist on the web (Gibberish detected)."}
+    # 3. WEB VERIFICATION (DNS CHECK)
+    # If the domain doesn't exist on the actual internet, it's a threat.
+    if not domain_exists(full_domain):
+        return {
+            "url": url, "is_scam": True, "prediction_code": "NON_EXISTENT_DOMAIN",
+            "message": "THREAT: Domain not found on the web. Likely fraudulent or gibberish."
+        }
 
-    # 4. TLD WHITELIST
-    if suffix not in TRUSTED_TLDS:
-        return {"url": url, "is_scam": True, "prediction_code": "UNTRUSTED_TLD", "message": f"THREAT: Dangerous or unverified extension (.{suffix})."}
+    # 4. GIBBERISH & REPETITION FILTER (The "Faaaah" Killer)
+    if re.search(r'(.)\1\1', domain_primary):
+        return {"url": url, "is_scam": True, "prediction_code": "GIBBERISH_PATTERN", "message": "THREAT: Automated repetitive domain detected."}
 
     # 5. BRAND DEFENSE
     for brand in PROTECTED_BRANDS:
         if brand in url:
             if full_domain not in [f"{brand}.{tld}" for tld in TRUSTED_TLDS]:
-                return {"url": url, "is_scam": True, "prediction_code": "IDENTITY_THEFT", "message": f"CRITICAL: Fake {brand.upper()} portal detected."}
-            return {"url": url, "is_scam": False, "message": "SECURE: Official brand domain."}
+                return {"url": url, "is_scam": True, "prediction_code": "BRAND_HIJACK", "message": f"CRITICAL: Unauthorized use of {brand.upper()} identity."}
+            return {"url": url, "is_scam": False, "message": "SECURE: Official brand domain verified."}
 
-    # 6. REPETITION & GIBBERISH PATTERNS
-    if re.search(r'(.)\1\1', domain_primary):
-        return {"url": url, "is_scam": True, "prediction_code": "PATTERN_MALWARE", "message": "THREAT: Automated bot-generated domain string."}
-
-    # 7. TYPOSQUATTING
-    for brand in PROTECTED_BRANDS:
-        if 0 < get_levenshtein_distance(domain_primary, brand) <= 2:
-            return {"url": url, "is_scam": True, "prediction_code": "VISUAL_SCAM", "message": "CRITICAL: Phishing attempt via typo detected."}
-
-    # 8. NEURAL INFERENCE
+    # 6. NEURAL INFERENCE
     if model:
         try:
             feat = [len(url), url.count('-'), url.count('.'), sum(c.isdigit() for c in url), len(re.findall(r'[^a-zA-Z0-9]', url)), 1 if 'https' in url else 0, 1]
             pred = model.predict([feat])[0]
             if int(pred) != 31:
-                 return {"url": url, "is_scam": True, "prediction_code": "ML_THREAT", "message": "THREAT: Fraudulent signature matched by AI."}
+                 return {"url": url, "is_scam": True, "prediction_code": str(pred), "message": "THREAT: Fraudulent signature detected by AI."}
         except: pass
+
+    # 7. FINAL TRUST CHECK
+    if suffix not in TRUSTED_TLDS or len(domain_primary) < 4:
+         return {"url": url, "is_scam": True, "prediction_code": "LOW_TRUST_SOURCE", "message": "THREAT: Unverified TLD or suspicious domain length."}
 
     return {"url": url, "is_scam": False, "message": "SECURE: Domain verified and active."}
 
-# --- THE AI CHAT ENGINE ---
+# --- THE AI CHAT ENGINE (STREAMING) ---
 @app.post("/chat")
 async def chat_handler(data: ChatInput):
     def generate():
         stream = AI_CLIENT.chat.completions.create(
             model="meta/llama-3.1-405b-instruct",
-            messages=[{"role": "system", "content": "You are Nexora AI. Technical, elite, concise."}, {"role": "user", "content": data.message}],
+            messages=[{"role": "system", "content": "You are Nexora AI. Technical, elite, concise. Created by Naman Reddy."}, {"role": "user", "content": data.message}],
             stream=True 
         )
         for chunk in stream:
