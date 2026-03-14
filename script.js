@@ -207,3 +207,42 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('urlInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') scanURL(); });
     document.getElementById('chatInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendChatMessage(); });
 });
+// Variable to track how the user sent the message
+let isVoiceMode = false;
+
+// Call this when the Voice Button is clicked
+function startVoiceInput() {
+    isVoiceMode = true;
+    // ... your voice recognition code ...
+}
+
+// Call this when the Send/Enter Button is clicked
+function startTextInput() {
+    isVoiceMode = false;
+}
+
+async function handleChatResponse(userInput) {
+    const response = await fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userInput })
+    });
+
+    const reader = response.body.getReader();
+    let aiFullResponse = "";
+
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = new TextDecoder().decode(value);
+        aiFullResponse += chunk;
+        updateChatUI(chunk); // Show text on screen as it arrives
+    }
+
+    // THE MAGIC PART: Only speak if the user used the mic
+    if (isVoiceMode) {
+        const utterance = new SpeechSynthesisUtterance(aiFullResponse);
+        window.speechSynthesis.speak(utterance);
+    } 
+    // If isVoiceMode is false (typing), the code does nothing here, staying silent.
+}
