@@ -246,3 +246,40 @@ window.scanURL = async function() {
     // Call the original scan function
     await originalScan();
 };
+// 1. SCROLL REVEAL LOGIC
+function reveal() {
+    var reveals = document.querySelectorAll(".reveal");
+    for (var i = 0; i < reveals.length; i++) {
+        var windowHeight = window.innerHeight;
+        var elementTop = reveals[i].getBoundingClientRect().top;
+        var elementVisible = 150;
+        if (elementTop < windowHeight - elementVisible) {
+            reveals[i].classList.add("active");
+        }
+    }
+}
+window.addEventListener("scroll", reveal);
+
+// 2. UPDATED CHAT (Visible Text Fix)
+window.sendChatMessage = async function() {
+    const input = document.getElementById('chatInput');
+    const box = document.getElementById('chatBox');
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    box.innerHTML += `<div class="user-msg" style="color:white; margin-bottom:10px;"><b>User:</b> ${msg}</div>`;
+    input.value = '';
+
+    try {
+        const response = await fetch(`${BACKEND}/chat`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: msg })
+        });
+        const data = await response.json();
+        box.innerHTML += `<div class="ai-msg" style="color:#22d3ee; margin-bottom:10px;"><b>Assistant:</b> ${data.response}</div>`;
+    } catch (err) {
+        box.innerHTML += `<div style="color:red">Connection Error.</div>`;
+    }
+    box.scrollTop = box.scrollHeight;
+};
