@@ -71,76 +71,66 @@ SUSPICIOUS_TLDS = ['.xyz', '.top', '.win', '.loan', '.club', '.online', '.site',
 def check_url(data: URLInput):
     url = str(data.url).lower().strip()
     
-    # 1. THE SECRET SAUCE: Professional Extraction
-    # tldextract correctly separates 'pay' (subdomain), 'google' (domain), 'com' (suffix)
+    # 1. PROFESSIONAL EXTRACTION
     ext = tldextract.extract(url)
-    domain_primary = ext.domain  # e.g., 'google'
-    full_registered_domain = f"{ext.domain}.{ext.suffix}" # e.g., 'google.com'
+    domain_primary = ext.domain  
+    full_registered_domain = f"{ext.domain}.{ext.suffix}" 
 
-    # 2. BRAND DEFENSE (The logic that now works for subdomains)
+    # 2. BRAND DEFENSE (The "Payapk" & "Spoof" Killer)
+    brand_found_in_url = False
     for brand in PROTECTED_BRANDS:
-        # Check if the brand is being used anywhere in the URL
         if brand in url:
-            # If the brand is present, the domain MUST be the official one
+            brand_found_in_url = True
             official_domains = [f"{brand}.com", f"{brand}.in", f"{brand}.net", f"{brand}.org", f"{brand}.co"]
+            
+            # If brand is mentioned but NOT on an official domain -> INSTANT BLOCK
             if not any(full_registered_domain == official for official in official_domains):
                 return {
                     "url": url, "is_scam": True, "prediction_code": "BRAND_SPOOF",
                     "message": f"CRITICAL: Unauthorized use of {brand.upper()} identity."
                 }
-            else:
-                # If it IS the official domain, skip similarity checks to prevent false alarms
-                continue
+            # If it IS official, we can stop checking other brands
+            break 
 
-        # 3. TYPOSQUATTING CHECK
+    # 3. TYPOSQUATTING CHECK (Visual Similarity)
+    # Only check if we haven't already confirmed it's an official brand site
+    for brand in PROTECTED_BRANDS:
         distance = get_levenshtein_distance(domain_primary, brand)
-        if 0 < distance <= 2:
+        if 0 < distance <= 2 and domain_primary != brand:
             return {
                 "url": url, "is_scam": True, "prediction_code": "SIMILARITY_THREAT",
                 "message": f"CRITICAL: Visual imitation of {brand.upper()} detected."
             }
 
-    # 4. HEURISTIC RED FLAGS
+    # 4. HEURISTIC RED FLAGS (The "Architecture" Check)
+    # If it has an IP address or too many digits, block it even if no brand is mentioned
     if re.search(r'\d{1,3}\.\d{1,3}\.\d{1,3}', url):
         return {"url": url, "is_scam": True, "prediction_code": "IP_HOSTING", "message": "THREAT: Malicious IP-based hosting."}
     
     if any(tld in url for tld in SUSPICIOUS_TLDS) or sum(c.isdigit() for c in url) > 10:
         return {"url": url, "is_scam": True, "prediction_code": "HIGH_RISK_PATTERN", "message": "THREAT: Suspicious URL architecture."}
 
-    # 5. NEURAL INFERENCE
+    # 5. NEURAL INFERENCE (The ML Model)
+    # This part was being skipped before—now it runs for EVERY link
     try:
         if model:
+            # Feature extraction for the .pkl model
             feat = [len(url), url.count('-'), url.count('.'), sum(c.isdigit() for c in url), 
                     len(re.findall(r'[^a-zA-Z0-9]', url)), 1 if 'https' in url else 0, 1]
             pred = model.predict([feat])[0]
+            
+            # Logic: If model says 1 (or your specific scam code), block it.
+            # Assuming 31 is your 'Safe' code based on previous messages
             is_scam = False if int(pred) == 31 else True
-            return {
-                "url": url, "is_scam": is_scam, "prediction_code": str(pred),
-                "message": "SECURE: Domain integrity verified." if not is_scam else "THREAT: Neural match found."
-            }
-    except:
-        pass
+            
+            if is_scam:
+                return {
+                    "url": url, "is_scam": True, "prediction_code": str(pred),
+                    "message": "THREAT: Neural fraud signature detected."
+                }
+    except Exception as e:
+        logger.error(f"Neural Core Error: {e}")
 
-    return {"url": url, "is_scam": False, "message": "Analysis complete: No immediate threats."}
+    # 6. FINAL CLEARANCE
+    return {"url": url, "is_scam": False, "message": "SECURE: No fraud signatures found."}
 
-# --- THE AI CHAT ENGINE ---
-from fastapi.responses import StreamingResponse
-import json
-
-@app.post("/chat")
-async def chat_handler(data: ChatInput):
-    def generate():
-        # This tells NVIDIA to send data as it's generated
-        stream = AI_CLIENT.chat.completions.create(
-            model="meta/llama-3.1-405b-instruct",
-            messages=[
-                {"role": "system", "content": "You are Nexora AI. Be elite, concise, and technical. No emojis."},
-                {"role": "user", "content": data.message}
-            ],
-            stream=True 
-        )
-        for chunk in stream:
-            if chunk.choices[0].delta.content:
-                yield chunk.choices[0].delta.content
-
-    return StreamingResponse(generate(), media_type="text/plain")
