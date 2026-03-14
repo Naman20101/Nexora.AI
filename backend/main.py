@@ -67,17 +67,17 @@ PROTECTED_BRANDS = [
 
 SUSPICIOUS_TLDS = ['.xyz', '.top', '.win', '.loan', '.club', '.online', '.site', '.biz', '.apk', '.app']
 
-# --- THE SCANNER ENGINE (STRICT WATERFALL) ---
+# --- THE SCANNER ENGINE ---
 @app.post("/check-url")
 def check_url(data: URLInput):
     url = str(data.url).lower().strip()
     
-    # Clean URL for analysis
+    # 1. DOMAIN EXTRACTION
     ext = tldextract.extract(url)
     domain_primary = ext.domain  
     full_registered_domain = f"{ext.domain}.{ext.suffix}" 
 
-    # GATE 1: BRAND SPOOFING (High Priority)
+    # 2. BRAND GATEKEEPER
     for brand in PROTECTED_BRANDS:
         if brand in url:
             official_suffixes = [f"{brand}.com", f"{brand}.in", f"{brand}.net", f"{brand}.org", f"{brand}.co"]
@@ -88,7 +88,15 @@ def check_url(data: URLInput):
                 }
             return {"url": url, "is_scam": False, "message": "SECURE: Official brand domain verified."}
 
-    # GATE 2: TYPOSQUATTING (Similarity)
+    # 3. GIBBERISH/ENTROPY KILLER (Catches 'faaaah')
+    # If string is short and has 3+ repeating chars, it's blocked.
+    if re.search(r'(.)\1\1', domain_primary):
+        return {
+            "url": url, "is_scam": True, "prediction_code": "GIBBERISH_DETECTED",
+            "message": "THREAT: Suspicious repetitive character pattern (Gibberish)."
+        }
+
+    # 4. TYPOSQUATTING CHECK
     for brand in PROTECTED_BRANDS:
         distance = get_levenshtein_distance(domain_primary, brand)
         if 0 < distance <= 2:
@@ -97,43 +105,41 @@ def check_url(data: URLInput):
                 "message": f"CRITICAL: Visual imitation of {brand.upper()} detected."
             }
 
-    # GATE 3: GIBBERISH / ENTROPY (Catching 'faaaah')
-    # If the domain has 3+ repeating characters or no vowels, it's likely a scam
-    if re.search(r'(.)\1\1', domain_primary) or len(domain_primary) > 4 and not any(v in domain_primary for v in 'aeiou'):
+    # 5. PATTERN & TLD GATE
+    if any(tld in url for tld in SUSPICIOUS_TLDS) or re.search(r'\d{5,}', url):
         return {
-            "url": url, "is_scam": True, "prediction_code": "GIBBERISH_DETECTED",
-            "message": "THREAT: Suspicious non-human domain string."
+            "url": url, "is_scam": True, "prediction_code": "HIGH_RISK_PATTERN",
+            "message": "THREAT: Suspicious TLD or numeric architecture."
         }
 
-    # GATE 4: PATTERN HEURISTICS
-    if re.search(r'\d{1,3}\.\d{1,3}\.\d{1,3}', url) or any(tld in url for tld in SUSPICIOUS_TLDS):
-        return {"url": url, "is_scam": True, "prediction_code": "HIGH_RISK_PATTERN", "message": "THREAT: Malicious architecture/TLD."}
-    
-    if sum(c.isdigit() for c in url) > 9:
-        return {"url": url, "is_scam": True, "prediction_code": "NUMERIC_OVERLOAD", "message": "THREAT: Excessive numeric characters."}
-
-    # GATE 5: NEURAL INFERENCE (The Final Brain)
+    # 6. NEURAL INFERENCE (The ML Model)
     if model:
         try:
+            # 31 is the known 'Safe' code for your model
             feat = [len(url), url.count('-'), url.count('.'), sum(c.isdigit() for c in url), 
                     len(re.findall(r'[^a-zA-Z0-9]', url)), 1 if 'https' in url else 0, 1]
             pred = model.predict([feat])[0]
-            # Assuming 31 is your 'Safe' label. Anything else is a threat.
+            
             if int(pred) != 31:
-                return {"url": url, "is_scam": True, "prediction_code": str(pred), "message": "THREAT: Neural fraud signature matched."}
+                return {"url": url, "is_scam": True, "prediction_code": str(pred), "message": "THREAT: Neural fraud signature detected."}
+            
+            # Additional safety: If domain is extremely short and not a known brand, we don't trust the 'Safe' result
+            if len(domain_primary) < 6:
+                 return {"url": url, "is_scam": True, "prediction_code": "LOW_CONFIDENCE", "message": "THREAT: Unverified short-string domain."}
+                 
         except Exception as e:
-            logger.error(f"Inference Error: {e}")
+            logger.error(f"Neural Core Error: {e}")
 
-    return {"url": url, "is_scam": False, "message": "SECURE: No fraud signatures found."}
+    return {"url": url, "is_scam": False, "message": "SECURE: No immediate threats found."}
 
-# --- THE AI CHAT ENGINE (STREAMING ENABLED) ---
+# --- THE AI CHAT ENGINE (STREAMING) ---
 @app.post("/chat")
 async def chat_handler(data: ChatInput):
     def generate():
         stream = AI_CLIENT.chat.completions.create(
             model="meta/llama-3.1-405b-instruct",
             messages=[
-                {"role": "system", "content": "You are Nexora AI, an elite security entity. Be concise and technical. No emojis."},
+                {"role": "system", "content": "You are Nexora AI, a cold, elite cyber-security entity. Analyze threats and be concise. Technical tone only. No emojis."},
                 {"role": "user", "content": data.message}
             ],
             stream=True 
