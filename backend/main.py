@@ -28,7 +28,7 @@ class URLInput(BaseModel):
 class ChatInput(BaseModel):
     message: str
 
-# --- NVIDIA AI CONFIGURATION ---
+# --- NVIDIA AI BRAIN CONFIGURATION ---
 AI_CLIENT = openai.OpenAI(
     base_url="https://integrate.api.nvidia.com/v1",
     api_key="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"
@@ -46,7 +46,6 @@ except Exception as e:
 
 # --- ADVANCED SECURITY UTILITIES ---
 def get_levenshtein_distance(s1: str, s2: str) -> int:
-    """Calculates visual similarity."""
     if len(s1) < len(s2): return get_levenshtein_distance(s2, s1)
     if len(s2) == 0: return len(s1)
     previous_row = range(len(s2) + 1)
@@ -60,7 +59,6 @@ def get_levenshtein_distance(s1: str, s2: str) -> int:
         previous_row = current_row
     return previous_row[-1]
 
-# --- THE HARD-CODED "TITAN" RULES ---
 PROTECTED_BRANDS = [
     "paypal", "paytm", "phonepe", "gpay", "google", "sbi", "hdfc", "icici", "amazon", "flipkart", 
     "netflix", "facebook", "instagram", "whatsapp", "binance", "coinbase", "apple", "microsoft"
@@ -68,43 +66,44 @@ PROTECTED_BRANDS = [
 
 SUSPICIOUS_TLDS = ['.xyz', '.top', '.win', '.loan', '.club', '.online', '.site', '.biz', '.apk', '.app']
 
-# --- THE SCANNER ENGINE (Auto-Debugger V2) ---
+# --- THE SCANNER ENGINE ---
 @app.post("/check-url")
 def check_url(data: URLInput):
     url = str(data.url).lower().strip()
     
     # 1. CLEANING & HOST EXTRACTION
-    # Removes protocol and path to isolate the host (e.g., pay.google.com)
+    # Isolate the host (e.g., pay.google.com)
     clean_host = url.replace('https://','').replace('http://','').replace('www.','').split('/')[0]
     parts = clean_host.split('.')
 
-    # AUTO-DEBUGGER: Correctly identify the Registerable Domain
-    # This ensures "google" is identified as the brand even in "pay.google.com"
+    # Extract the main domain part (e.g., 'google')
     if len(parts) >= 2:
-        # Check if it's a multi-part TLD like .co.in
-        if parts[-1] in ['in', 'uk', 'au'] and parts[-2] in ['co', 'org', 'com', 'gov']:
-            domain_primary = parts[-3] if len(parts) >= 3 else parts[0]
-        else:
-            domain_primary = parts[-2]
+        domain_primary = parts[-2]
     else:
         domain_primary = clean_host
 
-    # 2. THE BRAND DEFENSE
+    # 2. BRAND DEFENSE (Fixed Subdomain Support)
     for brand in PROTECTED_BRANDS:
+        # Check if the brand exists anywhere in the hostname
         if brand in clean_host:
             official_suffixes = [f"{brand}.com", f"{brand}.in", f"{brand}.net", f"{brand}.org", f"{brand}.co"]
             
-            # THE FIX: If the host ends with a legitimate brand domain, it's safe.
-            if any(clean_host.endswith(suffix) for suffix in official_suffixes):
+            # ALLOW if it's a subdomain of the official site (e.g., pay.google.com ends with google.com)
+            is_official = any(clean_host.endswith(suffix) for suffix in official_suffixes)
+            
+            if is_official:
+                # Bypass other checks for this brand if it is verified official
                 continue 
             else:
+                # If 'google' is in the URL but doesn't end in google.com/in/etc, it's a scam
                 return {
                     "url": url, "is_scam": True, "prediction_code": "BRAND_SPOOF",
                     "message": f"CRITICAL: Unauthorized use of {brand.upper()} identity."
                 }
         
-        # 3. TYPOSQUATTING (Only check if it's not the actual brand)
-        if brand != domain_primary:
+        # 3. TYPOSQUATTING CHECK
+        # Skip this if the primary domain is already the brand to avoid false positives
+        if domain_primary != brand:
             distance = get_levenshtein_distance(domain_primary, brand)
             if 0 < distance <= 2:
                 return {
@@ -116,7 +115,7 @@ def check_url(data: URLInput):
     if re.search(r'\d{1,3}\.\d{1,3}\.\d{1,3}', url):
         return {"url": url, "is_scam": True, "prediction_code": "IP_HOSTING", "message": "THREAT: Malicious IP-based hosting."}
     
-    if any(tld in url for tld in SUSPICIOUS_TLDS) or sum(c.isdigit() for c in url) > 9:
+    if any(tld in url for tld in SUSPICIOUS_TLDS) or sum(c.isdigit() for c in url) > 10:
         return {"url": url, "is_scam": True, "prediction_code": "HIGH_RISK_PATTERN", "message": "THREAT: Suspicious URL architecture."}
 
     # 5. NEURAL INFERENCE
@@ -127,6 +126,7 @@ def check_url(data: URLInput):
             pred = model.predict([feat])[0]
             
             is_scam = False if int(pred) == 31 else True
+            # Additional safety layer
             if not is_scam and (url.count('-') > 3 or url.count('.') > 4):
                 is_scam = True
                 pred = "OVERRIDE"
@@ -149,7 +149,7 @@ async def chat_handler(data: ChatInput):
             messages=[
                 {
                     "role": "system", 
-                    "content": "You are Nexora AI, a cold, elite cyber-security entity created by Naman Reddy. You analyze threats and help users stay safe. Be concise. No emojis."
+                    "content": "You are Nexora AI, a cold, elite cyber-security entity created by Naman Reddy. You help users identify fraud. Be concise and technical. Never use emojis."
                 },
                 {"role": "user", "content": data.message}
             ],
@@ -158,4 +158,4 @@ async def chat_handler(data: ChatInput):
         return {"response": completion.choices[0].message.content}
     except Exception as e:
         logger.error(f"AI Error: {e}")
-        return {"response": "Neural link unstable. Manual override engaged."}
+        return {"response": "Neural link unstable. Manual override: How can I help?"}
