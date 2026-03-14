@@ -1,84 +1,51 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const BACKEND = "https://nexora-ai-a-al-f-d-s-advanced-ai-powered.onrender.com";
-    const synth = window.speechSynthesis;
-    let shouldSpeakResponse = false; 
+window.sendChatMessage = async function(isFromVoice = false) {
+    const input = document.getElementById('chatInput');
+    const box = document.getElementById('chatBox');
+    if (!input || !box || !input.value.trim()) return;
 
-    // REVEAL FIX
-    document.querySelectorAll('.reveal').forEach(el => el.classList.add('active'));
+    shouldSpeakResponse = isFromVoice; 
+    const msg = input.value;
+    box.innerHTML += `<div class="user-msg"><b>You:</b> ${msg}</div>`;
+    input.value = '';
 
-    window.toggleChat = () => {
-        document.getElementById('sidePanel')?.classList.toggle('open');
-    };
+    const aiDiv = document.createElement('div');
+    aiDiv.className = 'ai-msg';
+    // Initial loading state
+    aiDiv.innerHTML = `<b>Nexora:</b> <span class="ai-content">...</span>`;
+    box.appendChild(aiDiv);
+    box.scrollTop = box.scrollHeight;
 
-    window.nexoraSpeak = function(text) {
-        if (!shouldSpeakResponse) return; 
-        synth.cancel(); 
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 1.0;
-        const voices = synth.getVoices();
-        utterance.voice = voices.find(v => v.name.includes('Male')) || voices[0];
-        synth.speak(utterance);
-        shouldSpeakResponse = false; 
-    };
+    try {
+        const response = await fetch(`${BACKEND}/chat`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: msg, is_voice: isFromVoice })
+        });
 
-    window.startVoice = function() {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) return;
-        const recognition = new SpeechRecognition();
-        recognition.onstart = () => {
-            document.getElementById('micBtn')?.classList.add('listening');
-            shouldSpeakResponse = true; 
-        };
-        recognition.onresult = (event) => {
-            document.getElementById('chatInput').value = event.results[0][0].transcript;
-            window.sendChatMessage(true); 
-        };
-        recognition.start();
-    };
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = "";
+        const contentSpan = aiDiv.querySelector('.ai-content');
+        let firstChunk = true;
 
-    window.sendChatMessage = async function(isFromVoice = false) {
-        const input = document.getElementById('chatInput');
-        const box = document.getElementById('chatBox');
-        if (!input || !box || !input.value.trim()) return;
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
 
-        shouldSpeakResponse = isFromVoice; 
-        const msg = input.value;
-        box.innerHTML += `<div class="user-msg"><b>You:</b> ${msg}</div>`;
-        input.value = '';
-
-        const aiDiv = document.createElement('div');
-        aiDiv.className = 'ai-msg';
-        aiDiv.innerHTML = `<b>Nexora:</b> <span class="ai-content">...</span>`;
-        box.appendChild(aiDiv);
-        box.scrollTop = box.scrollHeight;
-
-        try {
-            const response = await fetch(`${BACKEND}/chat`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: msg, is_voice: isFromVoice })
-            });
-
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let fullText = "";
-            const contentSpan = aiDiv.querySelector('.ai-content');
-
-            while (true) {
-                const { value, done } = await reader.read();
-                if (done) break;
-                if (fullText === "") contentSpan.innerText = "";
-                fullText += decoder.decode(value);
-                contentSpan.innerText = fullText;
-                box.scrollTop = box.scrollHeight;
+            // SPEED FIX: Clear "..." immediately when data starts flowing
+            if (firstChunk) {
+                contentSpan.innerText = "";
+                firstChunk = false;
             }
-            window.nexoraSpeak(fullText);
-        } catch (err) {
-            aiDiv.querySelector('.ai-content').innerText = "System offline.";
-        }
-    };
 
-    document.getElementById('chatInput')?.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') { shouldSpeakResponse = false; sendChatMessage(false); }
-    });
-});
+            fullText += decoder.decode(value, { stream: true });
+            contentSpan.innerText = fullText;
+            
+            // Optimization: Only scroll if the user isn't manually scrolling up
+            box.scrollTop = box.scrollHeight;
+        }
+        window.nexoraSpeak(fullText);
+    } catch (err) {
+        aiDiv.querySelector('.ai-content').innerText = "Neural Link timed out. Try again.";
+    }
+};
