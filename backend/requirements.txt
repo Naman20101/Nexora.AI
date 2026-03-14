@@ -2,7 +2,6 @@ requests
 python-whois
 beautifulsoup4
 tldextract
-requests
 idna
 pandas
 numpy
@@ -11,3 +10,4 @@ uvicorn
 joblib
 scikit-learn
 pydantic
+openai
