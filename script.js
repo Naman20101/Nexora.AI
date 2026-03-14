@@ -49,3 +49,8 @@ window.sendChatMessage = async function(isFromVoice = false) {
         aiDiv.querySelector('.ai-content').innerText = "Neural Link timed out. Try again.";
     }
 };
+// Add this at the bottom of your DOMContentLoaded listener
+fetch(`${BACKEND}/check-url`, { 
+    method: "POST", 
+    body: JSON.stringify({url: "ping.com"}) 
+}).then(() => console.log("Backend Warmed Up"));
