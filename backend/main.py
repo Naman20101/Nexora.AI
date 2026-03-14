@@ -13,7 +13,7 @@ from pydantic import BaseModel
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Nexora Titan-Shield Ultimate")
+app = FastAPI(title="Nexora Titan-Shield")
 
 app.add_middleware(
     CORSMiddleware,
@@ -67,17 +67,16 @@ PROTECTED_BRANDS = [
 
 SUSPICIOUS_TLDS = ['.xyz', '.top', '.win', '.loan', '.club', '.online', '.site', '.biz', '.apk', '.app']
 
-# --- THE SCANNER ENGINE ---
+# --- YOUR ORIGINAL SCANNER ENGINE ---
 @app.post("/check-url")
 def check_url(data: URLInput):
     url = str(data.url).lower().strip()
     
-    # 1. DOMAIN EXTRACTION
     ext = tldextract.extract(url)
     domain_primary = ext.domain  
     full_registered_domain = f"{ext.domain}.{ext.suffix}" 
 
-    # 2. BRAND GATEKEEPER
+    # 1. Brand Check
     for brand in PROTECTED_BRANDS:
         if brand in url:
             official_suffixes = [f"{brand}.com", f"{brand}.in", f"{brand}.net", f"{brand}.org", f"{brand}.co"]
@@ -86,17 +85,9 @@ def check_url(data: URLInput):
                     "url": url, "is_scam": True, "prediction_code": "BRAND_SPOOF",
                     "message": f"CRITICAL: Unauthorized use of {brand.upper()} identity."
                 }
-            return {"url": url, "is_scam": False, "message": "SECURE: Official brand domain verified."}
+            return {"url": url, "is_scam": False, "message": "SECURE: Official brand domain."}
 
-    # 3. GIBBERISH/ENTROPY KILLER (Catches 'faaaah')
-    # If string is short and has 3+ repeating chars, it's blocked.
-    if re.search(r'(.)\1\1', domain_primary):
-        return {
-            "url": url, "is_scam": True, "prediction_code": "GIBBERISH_DETECTED",
-            "message": "THREAT: Suspicious repetitive character pattern (Gibberish)."
-        }
-
-    # 4. TYPOSQUATTING CHECK
+    # 2. Typosquatting
     for brand in PROTECTED_BRANDS:
         distance = get_levenshtein_distance(domain_primary, brand)
         if 0 < distance <= 2:
@@ -105,41 +96,31 @@ def check_url(data: URLInput):
                 "message": f"CRITICAL: Visual imitation of {brand.upper()} detected."
             }
 
-    # 5. PATTERN & TLD GATE
+    # 3. Pattern/TLD
     if any(tld in url for tld in SUSPICIOUS_TLDS) or re.search(r'\d{5,}', url):
-        return {
-            "url": url, "is_scam": True, "prediction_code": "HIGH_RISK_PATTERN",
-            "message": "THREAT: Suspicious TLD or numeric architecture."
-        }
+        return {"url": url, "is_scam": True, "prediction_code": "HIGH_RISK_PATTERN", "message": "THREAT: Suspicious architecture."}
 
-    # 6. NEURAL INFERENCE (The ML Model)
+    # 4. Neural Model (Your original logic)
     if model:
         try:
-            # 31 is the known 'Safe' code for your model
             feat = [len(url), url.count('-'), url.count('.'), sum(c.isdigit() for c in url), 
                     len(re.findall(r'[^a-zA-Z0-9]', url)), 1 if 'https' in url else 0, 1]
             pred = model.predict([feat])[0]
-            
-            if int(pred) != 31:
-                return {"url": url, "is_scam": True, "prediction_code": str(pred), "message": "THREAT: Neural fraud signature detected."}
-            
-            # Additional safety: If domain is extremely short and not a known brand, we don't trust the 'Safe' result
-            if len(domain_primary) < 6:
-                 return {"url": url, "is_scam": True, "prediction_code": "LOW_CONFIDENCE", "message": "THREAT: Unverified short-string domain."}
-                 
-        except Exception as e:
-            logger.error(f"Neural Core Error: {e}")
+            if int(pred) != 31: # Assuming 31 is safe in your original model
+                return {"url": url, "is_scam": True, "prediction_code": str(pred), "message": "THREAT: Neural match."}
+        except:
+            pass
 
-    return {"url": url, "is_scam": False, "message": "SECURE: No immediate threats found."}
+    return {"url": url, "is_scam": False, "message": "Analysis complete."}
 
-# --- THE AI CHAT ENGINE (STREAMING) ---
+# --- THE AI CHAT ENGINE (STREAMING ENABLED) ---
 @app.post("/chat")
 async def chat_handler(data: ChatInput):
     def generate():
         stream = AI_CLIENT.chat.completions.create(
             model="meta/llama-3.1-405b-instruct",
             messages=[
-                {"role": "system", "content": "You are Nexora AI, a cold, elite cyber-security entity. Analyze threats and be concise. Technical tone only. No emojis."},
+                {"role": "system", "content": "You are Nexora AI. Be concise and technical. No emojis."},
                 {"role": "user", "content": data.message}
             ],
             stream=True 
