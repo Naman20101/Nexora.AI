@@ -72,9 +72,9 @@ SUSPICIOUS_TLDS = ['.xyz', '.top', '.win', '.loan', '.club', '.online', '.site',
 def check_url(data: URLInput):
     url = str(data.url).lower().strip()
     
-    # --- 1. THE ULTIMATE STRUCTURE GUARD ---
-    # This kills "Imsafw", "Nahbri", and any word without a proper TLD extension immediately.
-    if "." not in url or url.endswith(".") or len(url.split(".")[-1]) < 2:
+    # 1. THE ULTIMATE GATEKEEPER
+    # If there is no dot, or it's just a word like "Shahjjff", BLOCK IT.
+    if "." not in url or len(url.split(".")[-1]) < 2:
         return {
             "url": url, 
             "is_scam": True, 
@@ -96,9 +96,8 @@ def check_url(data: URLInput):
                     "url": url, "is_scam": True, "prediction_code": "BRAND_SPOOF",
                     "message": f"CRITICAL: Unauthorized use of {brand.upper()} identity."
                 }
-            else:
-                # If it's the real deal, we stop checking this URL
-                return {"url": url, "is_scam": False, "message": "SECURE: Official brand domain verified."}
+            # If it is official, return SAFE immediately
+            return {"url": url, "is_scam": False, "message": "SECURE: Official brand domain verified."}
 
     # 4. TYPOSQUATTING CHECK
     for brand in PROTECTED_BRANDS:
@@ -109,11 +108,11 @@ def check_url(data: URLInput):
                 "message": f"CRITICAL: Visual imitation of {brand.upper()} detected."
             }
 
-    # 5. HEURISTIC RED FLAGS
+    # 5. HEURISTIC & TLD CHECKS
     if any(tld in url for tld in SUSPICIOUS_TLDS) or sum(c.isdigit() for c in url) > 10:
         return {"url": url, "is_scam": True, "prediction_code": "HIGH_RISK_PATTERN", "message": "THREAT: Suspicious URL architecture."}
 
-    # 6. NEURAL INFERENCE
+    # 6. NEURAL INFERENCE (The ML Model)
     try:
         if model:
             feat = [len(url), url.count('-'), url.count('.'), sum(c.isdigit() for c in url), 
@@ -121,24 +120,19 @@ def check_url(data: URLInput):
             pred = model.predict([feat])[0]
             is_scam = False if int(pred) == 31 else True
             
-            # Final block for non-brand short domains
-            if not is_scam and len(domain_primary) < 5:
-                return {"url": url, "is_scam": True, "prediction_code": "LOW_TRUST", "message": "THREAT: Unverified short domain detected."}
-
-            return {
-                "url": url, "is_scam": is_scam, "prediction_code": str(pred),
-                "message": "SECURE: Domain integrity verified." if not is_scam else "THREAT: Neural match found."
-            }
+            if is_scam:
+                 return {"url": url, "is_scam": True, "prediction_code": str(pred), "message": "THREAT: Neural fraud signature found."}
     except:
         pass
 
-    # If it gets here, we still check the length as a final safety measure
-    if len(domain_primary) < 4:
-        return {"url": url, "is_scam": True, "prediction_code": "SUSPICIOUS_LENGTH", "message": "THREAT: Domain too short for verification."}
+    # 7. FINAL SAFETY NET
+    # If it's a random short string that isn't a brand, block it.
+    if len(domain_primary) < 5:
+        return {"url": url, "is_scam": True, "prediction_code": "LOW_TRUST", "message": "THREAT: Unverified short domain detected."}
 
     return {"url": url, "is_scam": False, "message": "Analysis complete: No immediate threats."}
 
-# --- THE AI CHAT ENGINE (STREAMING ENABLED) ---
+# --- THE AI CHAT ENGINE (STREAMING) ---
 @app.post("/chat")
 async def chat_handler(data: ChatInput):
     def generate():
