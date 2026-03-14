@@ -136,7 +136,6 @@ def check_url(data: URLInput):
 @app.post("/chat")
 async def chat_handler(data: ChatInput):
     try:
-        # Fixed model name for NVIDIA NIM
         completion = AI_CLIENT.chat.completions.create(
             model="meta/llama-3.1-405b-instruct",
             messages=[
@@ -146,17 +145,9 @@ async def chat_handler(data: ChatInput):
                 },
                 {"role": "user", "content": data.message}
             ],
-            temperature=0.2,
-            top_p=0.7,
             max_tokens=256
         )
         return {"response": completion.choices[0].message.content}
     except Exception as e:
         logger.error(f"AI Error: {e}")
         return {"response": "Neural link unstable. Manual override: How can I assist?"}
-
-# --- RENDER DEPLOYMENT ---
-if __name__ == "__main__":
-    import uvicorn
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
