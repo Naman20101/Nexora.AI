@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Nexora.ai | Stealth Fraud Intelligence</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -10,15 +10,15 @@
 <body>
 
     <div class="main-content" id="mainArea">
-        <header>
+        <header class="reveal">
             <div class="logo-container">
                 <h1>NEXORA<span style="color:white">.AI</span></h1>
-                <p class="tagline">Neural Payment Security — Built by Naman Reddy</p>
+                <p class="tagline">Neural Payment Security — Secure Intelligence Core</p>
             </div>
         </header>
 
         <main>
-            <section class="features-grid">
+            <section class="features-grid reveal">
                 <div class="feature-card">
                     <span class="icon">🧠</span>
                     <h3>Neural Scan</h3>
@@ -34,52 +34,66 @@
                     <h3>Validation</h3>
                     <p>Real-time Link DNA</p>
                 </div>
+                <div class="feature-card">
+                    <span class="icon">🛡️</span>
+                    <h3>Titan Shield</h3>
+                    <p>Active Fraud Blocking</p>
+                </div>
             </section>
 
-            <section class="scanner-section">
+            <section class="scanner-section reveal">
                 <div class="scanner-card" id="scannerCard">
                     <div class="terminal-header">
                         <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
-                        <span class="terminal-title">SCANNER_V2.0.exe</span>
+                        <span class="terminal-title">SCANNER_V7.0.exe</span>
                     </div>
                     <div class="input-group">
-                        <input type="text" id="urlInput" placeholder="Paste URL for neural analysis...">
+                        <input type="text" id="urlInput" placeholder="Paste URL for neural analysis..." autocomplete="off">
                         <button class="scan-btn" onclick="scanURL()">SCAN URL</button>
                     </div>
-                    <div id="result-display">SYSTEM READY...</div>
+                    <div id="result-display">SYSTEM STANDING BY...</div>
                 </div>
             </section>
 
-            <section class="search-section">
-                <h3 style="margin-bottom: 15px; color: var(--accent-cyan);">Global Payment App Search</h3>
-                <div class="input-group search-bar">
-                    <input type="text" id="searchInput" placeholder="Search (e.g. Paytm, PayPal, Venmo)...">
+            <section class="search-section reveal">
+                <div class="search-container">
+                    <h3 style="margin-bottom: 15px; color: var(--accent-cyan); text-align: center;">Global Payment Registry</h3>
+                    <div class="input-group search-bar">
+                        <input type="text" id="searchInput" onkeyup="searchApps()" placeholder="Search (e.g. Paytm, PayPal, Venmo)...">
+                    </div>
+                    <div id="suggestions"></div>
                 </div>
-                <div id="suggestions"></div>
             </section>
         </main>
 
-        <footer>
+        <footer class="reveal">
             <p>© 2026 Nexora.ai — All Systems Operational</p>
-        </footer>
+        </footer >
     </div>
 
     <div class="side-panel" id="sidePanel">
         <div class="chat-header">
-            <h3>NEXORA_ASSISTANT</h3>
-            <span class="encryption-tag">LOCAL_HOST_AI</span>
+            <div class="header-info">
+                <h3>NEXORA_ASSISTANT</h3>
+                <span class="encryption-tag">ENCRYPTED_SESSION</span>
+            </div>
+            <button class="close-chat" onclick="toggleChat()">×</button>
         </div>
+        
         <div class="chat-messages" id="chatBox">
-            <div class="message bot-msg">Welcome, Naman. How can I assist with your security audit?</div>
+            <div class="ai-msg"><b>Assistant:</b> Systems active. Perimeter scan complete. How can I assist you?</div>
         </div>
+
         <div class="chat-input-area">
-            <input type="text" id="chatInput" placeholder="Send message...">
-            <button class="send-btn" onclick="sendMessage()">></button>
+            <input type="text" id="chatInput" placeholder="Ask Nexora...">
+            <button class="send-btn" onclick="sendChatMessage()">></button>
         </div>
     </div>
 
-    <div class="chat-toggle" onclick="toggleChat()">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+    <div class="chat-toggle" id="chatToggleBtn" onclick="toggleChat()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2.5">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
     </div>
 
     <script src="script.js"></script>
