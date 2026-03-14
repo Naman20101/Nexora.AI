@@ -4,6 +4,7 @@ import re
 import joblib
 import tldextract 
 import openai
+import socket
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -60,98 +61,77 @@ def get_levenshtein_distance(s1: str, s2: str) -> int:
         previous_row = current_row
     return previous_row[-1]
 
-PROTECTED_BRANDS = [
-    "paypal", "paytm", "phonepe", "gpay", "google", "sbi", "hdfc", "icici", "amazon", "flipkart", 
-    "netflix", "facebook", "instagram", "whatsapp", "binance", "coinbase", "apple", "microsoft"
-]
+def verify_dns(hostname: str) -> bool:
+    """Checks if the domain actually exists on the web."""
+    try:
+        socket.gethostbyname(hostname)
+        return True
+    except socket.gaierror:
+        return False
 
-SUSPICIOUS_TLDS = ['.xyz', '.top', '.win', '.loan', '.club', '.online', '.site', '.biz', '.apk', '.app']
+PROTECTED_BRANDS = ["paypal", "paytm", "phonepe", "gpay", "google", "sbi", "hdfc", "icici", "amazon", "flipkart", "netflix", "facebook", "instagram", "whatsapp", "binance", "coinbase", "apple", "microsoft"]
+TRUSTED_TLDS = ['com', 'in', 'net', 'org', 'co', 'gov', 'edu', 'io', 'me', 'info']
 
 # --- THE SCANNER ENGINE ---
 @app.post("/check-url")
 def check_url(data: URLInput):
     url = str(data.url).lower().strip()
     
-    # 1. THE ABSOLUTE STRUCTURE GUARD
-    # Kills "Nahbri" or "Imsafw" because they have no dot.
-    if "." not in url or url.endswith(".") or len(url.split(".")[-1]) < 2:
-        return {
-            "url": url, "is_scam": True, "prediction_code": "INVALID_STRUCTURE",
-            "message": "THREAT: Input is not a valid URL. Domain extension required (e.g., .com)."
-        }
+    # 1. HARD STRUCTURE CHECK
+    if "." not in url or url.count(".") < 1 or len(url.split(".")[-1]) < 2:
+        return {"url": url, "is_scam": True, "prediction_code": "INVALID_URL", "message": "THREAT: Input is not a valid web address."}
     
     # 2. EXTRACTION
     ext = tldextract.extract(url)
     domain_primary = ext.domain  
-    full_registered_domain = f"{ext.domain}.{ext.suffix}" 
+    suffix = ext.suffix
+    full_domain = f"{ext.domain}.{ext.suffix}"
 
-    # 3. GIBBERISH & REPETITION FILTER (The "Faaaah.com" Killer)
-    # Kills domains with 3+ repeating chars (aaa) or very low unique character counts
-    if re.search(r'(.)\1\1', domain_primary):
-        return {
-            "url": url, "is_scam": True, "prediction_code": "GIBBERISH_DETECTED",
-            "message": "THREAT: Malicious repetitive string detected in domain."
-        }
-    
-    if len(domain_primary) > 0:
-        unique_ratio = len(set(domain_primary)) / len(domain_primary)
-        if len(domain_primary) > 6 and unique_ratio < 0.35:
-            return {
-                "url": url, "is_scam": True, "prediction_code": "HIGH_ENTROPY_NONSENSE",
-                "message": "THREAT: Non-human domain signature (Gibberish)."
-            }
+    # 3. DNS VERIFICATION (The "Does it Exist" Test)
+    if not verify_dns(full_domain):
+        return {"url": url, "is_scam": True, "prediction_code": "NON_EXISTENT_DOMAIN", "message": "THREAT: Domain does not exist on the web (Gibberish detected)."}
 
-    # 4. BRAND DEFENSE
+    # 4. TLD WHITELIST
+    if suffix not in TRUSTED_TLDS:
+        return {"url": url, "is_scam": True, "prediction_code": "UNTRUSTED_TLD", "message": f"THREAT: Dangerous or unverified extension (.{suffix})."}
+
+    # 5. BRAND DEFENSE
     for brand in PROTECTED_BRANDS:
         if brand in url:
-            official_domains = [f"{brand}.com", f"{brand}.in", f"{brand}.net", f"{brand}.org", f"{brand}.co"]
-            if not any(full_registered_domain == official for official in official_domains):
-                return {
-                    "url": url, "is_scam": True, "prediction_code": "BRAND_SPOOF",
-                    "message": f"CRITICAL: Unauthorized use of {brand.upper()} identity."
-                }
-            return {"url": url, "is_scam": False, "message": "SECURE: Official brand domain verified."}
+            if full_domain not in [f"{brand}.{tld}" for tld in TRUSTED_TLDS]:
+                return {"url": url, "is_scam": True, "prediction_code": "IDENTITY_THEFT", "message": f"CRITICAL: Fake {brand.upper()} portal detected."}
+            return {"url": url, "is_scam": False, "message": "SECURE: Official brand domain."}
 
-    # 5. TYPOSQUATTING CHECK
+    # 6. REPETITION & GIBBERISH PATTERNS
+    if re.search(r'(.)\1\1', domain_primary):
+        return {"url": url, "is_scam": True, "prediction_code": "PATTERN_MALWARE", "message": "THREAT: Automated bot-generated domain string."}
+
+    # 7. TYPOSQUATTING
     for brand in PROTECTED_BRANDS:
-        distance = get_levenshtein_distance(domain_primary, brand)
-        if 0 < distance <= 2:
-            return {
-                "url": url, "is_scam": True, "prediction_code": "SIMILARITY_THREAT",
-                "message": f"CRITICAL: Visual imitation of {brand.upper()} detected."
-            }
+        if 0 < get_levenshtein_distance(domain_primary, brand) <= 2:
+            return {"url": url, "is_scam": True, "prediction_code": "VISUAL_SCAM", "message": "CRITICAL: Phishing attempt via typo detected."}
 
-    # 6. NEURAL INFERENCE
-    try:
-        if model:
-            feat = [len(url), url.count('-'), url.count('.'), sum(c.isdigit() for c in url), 
-                    len(re.findall(r'[^a-zA-Z0-9]', url)), 1 if 'https' in url else 0, 1]
+    # 8. NEURAL INFERENCE
+    if model:
+        try:
+            feat = [len(url), url.count('-'), url.count('.'), sum(c.isdigit() for c in url), len(re.findall(r'[^a-zA-Z0-9]', url)), 1 if 'https' in url else 0, 1]
             pred = model.predict([feat])[0]
             if int(pred) != 31:
-                 return {"url": url, "is_scam": True, "prediction_code": str(pred), "message": "THREAT: Neural fraud signature found."}
-    except:
-        pass
+                 return {"url": url, "is_scam": True, "prediction_code": "ML_THREAT", "message": "THREAT: Fraudulent signature matched by AI."}
+        except: pass
 
-    # 7. FINAL RISK EVALUATION
-    if any(tld in url for tld in SUSPICIOUS_TLDS) or len(domain_primary) < 4:
-        return {"url": url, "is_scam": True, "prediction_code": "UNVERIFIED_SOURCE", "message": "THREAT: Suspicious TLD or unverified short-string domain."}
+    return {"url": url, "is_scam": False, "message": "SECURE: Domain verified and active."}
 
-    return {"url": url, "is_scam": False, "message": "Analysis complete: No threats detected."}
-
-# --- THE AI CHAT ENGINE (STREAMING) ---
+# --- THE AI CHAT ENGINE ---
 @app.post("/chat")
 async def chat_handler(data: ChatInput):
     def generate():
         stream = AI_CLIENT.chat.completions.create(
             model="meta/llama-3.1-405b-instruct",
-            messages=[
-                {"role": "system", "content": "You are Nexora AI, an elite cyber-security entity created by Naman Reddy. Analyze threats concisely. Technical tone. No emojis."},
-                {"role": "user", "content": data.message}
-            ],
+            messages=[{"role": "system", "content": "You are Nexora AI. Technical, elite, concise."}, {"role": "user", "content": data.message}],
             stream=True 
         )
         for chunk in stream:
             if chunk.choices[0].delta.content:
                 yield chunk.choices[0].delta.content
-
     return StreamingResponse(generate(), media_type="text/plain")
