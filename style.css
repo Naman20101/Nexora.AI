@@ -244,3 +244,20 @@ input {
 }
 
 @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+# Updated /chat endpoint in main.py
+@app.post("/chat")
+async def chat(data: dict):
+    user_msg = data.get("message", "").lower()
+    
+    # Logic to handle the AI response
+    if "hi" in user_msg or "hello" in user_msg:
+        response = "Systems active. Scanning perimeter for threats. How can I assist you?"
+    elif "status" in user_msg:
+        response = "Neural Core is Online. Latency 24ms. Protection: Active."
+    elif "help" in user_msg:
+        response = "Paste a URL in the scanner to begin a deep-packet interrogation."
+    else:
+        response = "I am Nexora AI. I specialize in detecting malicious network signatures."
+    
+    return {"response": response}
