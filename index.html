@@ -6,6 +6,68 @@
     <title>Nexora.ai | Stealth Fraud Intelligence</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Nexora Voice & Streaming UI Additions */
+        .voice-btn {
+            background: transparent;
+            border: none;
+            color: #00f2ff; /* accent-cyan */
+            cursor: pointer;
+            padding: 0 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .voice-btn:hover {
+            color: #fff;
+            filter: drop-shadow(0 0 5px #00f2ff);
+        }
+
+        .voice-btn.listening {
+            color: #ff4444;
+            animation: pulse-red 1.5s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% { transform: scale(1); filter: drop-shadow(0 0 2px #ff4444); }
+            50% { transform: scale(1.15); filter: drop-shadow(0 0 10px #ff4444); }
+            100% { transform: scale(1); filter: drop-shadow(0 0 2px #ff4444); }
+        }
+
+        .typing-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 15px;
+            background: #00f2ff;
+            margin-left: 5px;
+            animation: blink 0.7s infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        .chat-input-area {
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.4);
+            border-top: 1px solid rgba(0, 242, 255, 0.2);
+            padding: 10px;
+        }
+
+        #chatInput {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-family: 'Fira Code', monospace;
+            outline: none;
+            padding: 5px 10px;
+        }
+    </style>
 </head>
 <body>
 
@@ -57,7 +119,7 @@
 
             <section class="search-section reveal">
                 <div class="search-container">
-                    <h3 style="margin-bottom: 15px; color: var(--accent-cyan); text-align: center;">Global Payment Registry</h3>
+                    <h3 style="margin-bottom: 15px; color: #00f2ff; text-align: center;">Global Payment Registry</h3>
                     <div class="input-group search-bar">
                         <input type="text" id="searchInput" onkeyup="searchApps()" placeholder="Search (e.g. Paytm, PayPal, Venmo)...">
                     </div>
@@ -68,7 +130,7 @@
 
         <footer class="reveal">
             <p>© 2026 Nexora.ai — All Systems Operational</p>
-        </footer >
+        </footer>
     </div>
 
     <div class="side-panel" id="sidePanel">
@@ -85,7 +147,15 @@
         </div>
 
         <div class="chat-input-area">
-            <input type="text" id="chatInput" placeholder="Ask Nexora...">
+            <button class="voice-btn" id="micBtn" onclick="startVoice()" title="Voice Input">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                </svg>
+            </button>
+            <input type="text" id="chatInput" placeholder="Ask Nexora..." onkeypress="if(event.key==='Enter') sendChatMessage()">
             <button class="send-btn" onclick="sendChatMessage()">></button>
         </div>
     </div>
