@@ -2,10 +2,11 @@ import logging
 import os
 import re
 import joblib
-import tldextract  # THE SECRET TO 100% ACCURACY
+import tldextract
 import openai
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 # --- INITIALIZATION ---
@@ -45,7 +46,7 @@ except Exception as e:
     logger.error(f"❌ Neural Core Offline: {e}")
 
 # --- SECURITY UTILITIES ---
-def get_levenshtein_distance(s1: str, s2: str) -> int:
+def get_levenshtein_distance(s1, s2):
     if len(s1) < len(s2): return get_levenshtein_distance(s2, s1)
     if len(s2) == 0: return len(s1)
     previous_row = range(len(s2) + 1)
@@ -66,71 +67,79 @@ PROTECTED_BRANDS = [
 
 SUSPICIOUS_TLDS = ['.xyz', '.top', '.win', '.loan', '.club', '.online', '.site', '.biz', '.apk', '.app']
 
-# --- THE SCANNER ENGINE ---
+# --- THE SCANNER ENGINE (STRICT WATERFALL) ---
 @app.post("/check-url")
 def check_url(data: URLInput):
     url = str(data.url).lower().strip()
     
-    # 1. PROFESSIONAL EXTRACTION
+    # Clean URL for analysis
     ext = tldextract.extract(url)
     domain_primary = ext.domain  
     full_registered_domain = f"{ext.domain}.{ext.suffix}" 
 
-    # 2. BRAND DEFENSE (The "Payapk" & "Spoof" Killer)
-    brand_found_in_url = False
+    # GATE 1: BRAND SPOOFING (High Priority)
     for brand in PROTECTED_BRANDS:
         if brand in url:
-            brand_found_in_url = True
-            official_domains = [f"{brand}.com", f"{brand}.in", f"{brand}.net", f"{brand}.org", f"{brand}.co"]
-            
-            # If brand is mentioned but NOT on an official domain -> INSTANT BLOCK
-            if not any(full_registered_domain == official for official in official_domains):
+            official_suffixes = [f"{brand}.com", f"{brand}.in", f"{brand}.net", f"{brand}.org", f"{brand}.co"]
+            if not any(full_registered_domain == official for official in official_suffixes):
                 return {
                     "url": url, "is_scam": True, "prediction_code": "BRAND_SPOOF",
                     "message": f"CRITICAL: Unauthorized use of {brand.upper()} identity."
                 }
-            # If it IS official, we can stop checking other brands
-            break 
+            return {"url": url, "is_scam": False, "message": "SECURE: Official brand domain verified."}
 
-    # 3. TYPOSQUATTING CHECK (Visual Similarity)
-    # Only check if we haven't already confirmed it's an official brand site
+    # GATE 2: TYPOSQUATTING (Similarity)
     for brand in PROTECTED_BRANDS:
         distance = get_levenshtein_distance(domain_primary, brand)
-        if 0 < distance <= 2 and domain_primary != brand:
+        if 0 < distance <= 2:
             return {
                 "url": url, "is_scam": True, "prediction_code": "SIMILARITY_THREAT",
                 "message": f"CRITICAL: Visual imitation of {brand.upper()} detected."
             }
 
-    # 4. HEURISTIC RED FLAGS (The "Architecture" Check)
-    # If it has an IP address or too many digits, block it even if no brand is mentioned
-    if re.search(r'\d{1,3}\.\d{1,3}\.\d{1,3}', url):
-        return {"url": url, "is_scam": True, "prediction_code": "IP_HOSTING", "message": "THREAT: Malicious IP-based hosting."}
-    
-    if any(tld in url for tld in SUSPICIOUS_TLDS) or sum(c.isdigit() for c in url) > 10:
-        return {"url": url, "is_scam": True, "prediction_code": "HIGH_RISK_PATTERN", "message": "THREAT: Suspicious URL architecture."}
+    # GATE 3: GIBBERISH / ENTROPY (Catching 'faaaah')
+    # If the domain has 3+ repeating characters or no vowels, it's likely a scam
+    if re.search(r'(.)\1\1', domain_primary) or len(domain_primary) > 4 and not any(v in domain_primary for v in 'aeiou'):
+        return {
+            "url": url, "is_scam": True, "prediction_code": "GIBBERISH_DETECTED",
+            "message": "THREAT: Suspicious non-human domain string."
+        }
 
-    # 5. NEURAL INFERENCE (The ML Model)
-    # This part was being skipped before—now it runs for EVERY link
-    try:
-        if model:
-            # Feature extraction for the .pkl model
+    # GATE 4: PATTERN HEURISTICS
+    if re.search(r'\d{1,3}\.\d{1,3}\.\d{1,3}', url) or any(tld in url for tld in SUSPICIOUS_TLDS):
+        return {"url": url, "is_scam": True, "prediction_code": "HIGH_RISK_PATTERN", "message": "THREAT: Malicious architecture/TLD."}
+    
+    if sum(c.isdigit() for c in url) > 9:
+        return {"url": url, "is_scam": True, "prediction_code": "NUMERIC_OVERLOAD", "message": "THREAT: Excessive numeric characters."}
+
+    # GATE 5: NEURAL INFERENCE (The Final Brain)
+    if model:
+        try:
             feat = [len(url), url.count('-'), url.count('.'), sum(c.isdigit() for c in url), 
                     len(re.findall(r'[^a-zA-Z0-9]', url)), 1 if 'https' in url else 0, 1]
             pred = model.predict([feat])[0]
-            
-            # Logic: If model says 1 (or your specific scam code), block it.
-            # Assuming 31 is your 'Safe' code based on previous messages
-            is_scam = False if int(pred) == 31 else True
-            
-            if is_scam:
-                return {
-                    "url": url, "is_scam": True, "prediction_code": str(pred),
-                    "message": "THREAT: Neural fraud signature detected."
-                }
-    except Exception as e:
-        logger.error(f"Neural Core Error: {e}")
+            # Assuming 31 is your 'Safe' label. Anything else is a threat.
+            if int(pred) != 31:
+                return {"url": url, "is_scam": True, "prediction_code": str(pred), "message": "THREAT: Neural fraud signature matched."}
+        except Exception as e:
+            logger.error(f"Inference Error: {e}")
 
-    # 6. FINAL CLEARANCE
     return {"url": url, "is_scam": False, "message": "SECURE: No fraud signatures found."}
 
+# --- THE AI CHAT ENGINE (STREAMING ENABLED) ---
+@app.post("/chat")
+async def chat_handler(data: ChatInput):
+    def generate():
+        stream = AI_CLIENT.chat.completions.create(
+            model="meta/llama-3.1-405b-instruct",
+            messages=[
+                {"role": "system", "content": "You are Nexora AI, an elite security entity. Be concise and technical. No emojis."},
+                {"role": "user", "content": data.message}
+            ],
+            stream=True 
+        )
+        for chunk in stream:
+            if chunk.choices[0].delta.content:
+                yield chunk.choices[0].delta.content
+
+    return StreamingResponse(generate(), media_type="text/plain")
