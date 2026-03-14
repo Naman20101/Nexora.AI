@@ -189,3 +189,60 @@ document.addEventListener("DOMContentLoaded", () => {
         element.click();
     };
 });
+
+// --- AI ASSISTANT LOGIC ---
+window.sendChatMessage = async function() {
+    const input = document.getElementById('chatInput');
+    const box = document.getElementById('chatBox');
+    const msg = input.value.trim();
+    
+    if (!msg) return;
+
+    // Add User Bubble
+    box.innerHTML += `
+        <div style="text-align: right; margin-bottom: 10px;">
+            <span style="background: rgba(0, 242, 254, 0.2); padding: 8px 12px; border-radius: 12px; display: inline-block;">
+                ${msg}
+            </span>
+        </div>`;
+    
+    input.value = '';
+    box.scrollTop = box.scrollHeight;
+
+    try {
+        const response = await fetch(`${BACKEND}/chat`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: msg })
+        });
+        const data = await response.json();
+        
+        // Add AI Bubble
+        box.innerHTML += `
+            <div style="text-align: left; margin-bottom: 10px; animation: fadeIn 0.5s;">
+                <span style="background: rgba(255, 255, 255, 0.1); padding: 8px 12px; border-radius: 12px; display: inline-block; border-left: 2px solid #00f2fe;">
+                    <b>Nexora:</b> ${data.response}
+                </span>
+            </div>`;
+    } catch (err) {
+        box.innerHTML += `<div style="color: #64748b; font-size: 0.8rem;">Assistant sync error. Check backend.</div>`;
+    }
+    box.scrollTop = box.scrollHeight;
+};
+
+// Allow "Enter" key to send chat messages
+document.getElementById('chatInput')?.addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') sendChatMessage();
+});
+
+// --- UI TRANSITIONS ---
+// This adds a subtle "scanning" pulse to the card when you click the button
+const originalScan = window.scanURL;
+window.scanURL = async function() {
+    const card = document.getElementById('scannerCard');
+    card.style.transform = "scale(0.98)";
+    setTimeout(() => card.style.transform = "scale(1)", 150);
+    
+    // Call the original scan function
+    await originalScan();
+};
