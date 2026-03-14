@@ -2,10 +2,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // 1. CONFIGURATION
     const BACKEND = "https://nexora-ai-a-al-f-d-s-advanced-ai-powered.onrender.com";
     let lastScanData = null;
+    const synth = window.speechSynthesis;
 
     console.log("Nexora AI: Neural Core Synced");
 
-    // --- 2. HIGH-END SCROLL REVEAL (Intersection Observer) ---
+    // --- 2. HIGH-END SCROLL REVEAL ---
     const revealOptions = { threshold: 0.15, rootMargin: "0px 0px -50px 0px" };
     const revealObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -22,7 +23,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const sidePanel = document.getElementById('sidePanel');
         const mainArea = document.getElementById('mainArea');
         sidePanel.classList.toggle('open');
-        // Only shrink main area on large screens to prevent mobile glitches
         if (window.innerWidth > 1024) {
             mainArea.classList.toggle('shrunk');
         }
@@ -40,7 +40,6 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // Pulse Animation
         card.style.transform = "scale(0.98)";
         display.innerHTML = `<span class="loading-text">INTERROGATING NEURAL DATABASE...</span>`;
         
@@ -74,7 +73,47 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    // --- 5. AI ASSISTANT LOGIC ---
+    // --- 5. VOICE & STREAMING AI ASSISTANT ---
+
+    // A. Nexora Speaks (TTS)
+    window.nexoraSpeak = function(text) {
+        synth.cancel(); // Stop current speech
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.1;
+        utterance.pitch = 0.8;
+        const voices = synth.getVoices();
+        // Try to find a male/robotic voice, otherwise use default
+        utterance.voice = voices.find(v => v.name.includes('Google UK English Male')) || voices[0];
+        synth.speak(utterance);
+    };
+
+    // B. Nexora Listens (STT)
+    window.startVoice = function() {
+        const micBtn = document.getElementById('micBtn');
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        
+        if (!SpeechRecognition) {
+            alert("Voice recognition not supported.");
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'en-US';
+
+        recognition.onstart = () => micBtn.classList.add('listening');
+        recognition.onend = () => micBtn.classList.remove('listening');
+        recognition.onerror = () => micBtn.classList.remove('listening');
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            document.getElementById('chatInput').value = transcript;
+            window.sendChatMessage();
+        };
+
+        recognition.start();
+    };
+
+    // C. High-Speed Chat Logic (Streaming)
     window.sendChatMessage = async function() {
         const input = document.getElementById('chatInput');
         const box = document.getElementById('chatBox');
@@ -82,10 +121,19 @@ document.addEventListener("DOMContentLoaded", () => {
         
         if (!msg) return;
 
-        // User Bubble
+        // Add User Bubble
         box.innerHTML += `<div class="user-msg"><b>You:</b> ${msg}</div>`;
         input.value = '';
+        
+        // Prepare AI Bubble with Cursor
+        const aiMsgDiv = document.createElement('div');
+        aiMsgDiv.className = 'ai-msg';
+        aiMsgDiv.innerHTML = `<b>Nexora:</b> <span class="ai-content"></span><span class="typing-cursor"></span>`;
+        box.appendChild(aiMsgDiv);
         box.scrollTop = box.scrollHeight;
+
+        const contentSpan = aiMsgDiv.querySelector('.ai-content');
+        const cursor = aiMsgDiv.querySelector('.typing-cursor');
 
         try {
             const response = await fetch(`${BACKEND}/chat`, {
@@ -93,12 +141,31 @@ document.addEventListener("DOMContentLoaded", () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ message: msg })
             });
-            const data = await response.json();
-            
-            // AI Bubble
-            box.innerHTML += `<div class="ai-msg"><b>Nexora:</b> ${data.response}</div>`;
+
+            // Read Stream Data
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let fullResponseText = "";
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                
+                const chunk = decoder.decode(value, { stream: true });
+                fullResponseText += chunk;
+                
+                // Update UI word-by-word
+                contentSpan.innerText = fullResponseText;
+                box.scrollTop = box.scrollHeight;
+            }
+
+            // Finish up
+            cursor.remove();
+            window.nexoraSpeak(fullResponseText); // AI speaks the final result
+
         } catch (err) {
-            box.innerHTML += `<div style="color:var(--danger); font-size:0.7rem; padding:10px;">Link Severed. AI is offline.</div>`;
+            cursor.remove();
+            contentSpan.innerHTML = `<span style="color:var(--danger)">Neural link severed. AI offline.</span>`;
         }
         box.scrollTop = box.scrollHeight;
     };
@@ -114,7 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
         link.click();
     };
 
-    // App Search Logic
+    // Search Logic
     const apps = [
         { name: "Paytm", country: "India", website: "https://paytm.com" },
         { name: "PayPal", country: "Global", website: "https://paypal.com" },
@@ -130,13 +197,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
         apps.filter(a => a.name.toLowerCase().includes(query)).forEach(app => {
             const div = document.createElement("div");
-            div.className = "suggestion-item reveal active"; // Force active for instant search results
+            div.className = "suggestion-item reveal active";
             div.innerHTML = `<span>${app.name}</span> <a href="${app.website}" target="_blank">OFFICIAL</a>`;
             suggestions.appendChild(div);
         });
     });
 
-    // Listeners
+    // Handle Enter Keys
     document.getElementById('urlInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') scanURL(); });
     document.getElementById('chatInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendChatMessage(); });
 });
