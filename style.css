@@ -1,6 +1,6 @@
 :root {
     --bg-dark: #020617;
-    --card-bg: rgba(15, 23, 42, 0.7);
+    --card-bg: rgba(15, 23, 42, 0.75);
     --accent-cyan: #22d3ee;
     --accent-blue: #3b82f6;
     --border: rgba(255, 255, 255, 0.1);
@@ -13,261 +13,223 @@
     margin: 0; 
     padding: 0; 
     box-sizing: border-box; 
-    font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+    font-family: 'Inter', sans-serif; 
 }
 
 body {
     background-color: var(--bg-dark);
     background-image: 
-        radial-gradient(circle at 10% 20%, rgba(34, 211, 238, 0.05) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 40%);
+        radial-gradient(circle at 0% 0%, rgba(34, 211, 238, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 100% 100%, rgba(59, 130, 246, 0.08) 0%, transparent 50%);
     color: #f0f0f0;
     min-height: 100vh;
     overflow-x: hidden;
-    display: flex;
-    line-height: 1.5;
+    line-height: 1.6;
 }
 
-/* --- Layout Responsiveness --- */
+/* --- Core Layout --- */
 .main-content {
-    flex: 1;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 1rem; /* Smaller padding for mobile */
-    transition: 0.6s cubic-bezier(0.19, 1, 0.22, 1);
-    width: 100%;
+    transition: margin-right 0.5s cubic-bezier(0.19, 1, 0.22, 1);
 }
 
-/* Large Screen Chat Adjustment */
-@media (min-width: 1024px) {
-    .main-content { padding: 3rem; }
-    .main-content.shrunk { margin-right: 400px; opacity: 0.6; pointer-events: none; }
+/* --- Scroll Reveal Logic (The Pro Way) --- */
+.reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+    will-change: transform, opacity;
 }
 
-header { text-align: center; margin-bottom: 2rem; }
+.reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* --- Header Styling --- */
+header {
+    text-align: center;
+    margin-bottom: 4rem;
+    margin-top: 2rem;
+}
 
 header h1 {
-    font-size: clamp(2rem, 8vw, 3.5rem); /* Fluid typography */
+    font-size: clamp(2.5rem, 10vw, 4.5rem);
     font-weight: 800;
-    letter-spacing: -2px;
-    background: linear-gradient(to right, var(--accent-cyan), var(--accent-blue));
+    letter-spacing: -3px;
+    background: linear-gradient(135deg, #fff 30%, var(--accent-cyan));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    margin-bottom: 10px;
 }
 
-.tagline { 
-    color: #64748b; 
-    font-size: 0.75rem; 
-    letter-spacing: 2px; 
-    text-transform: uppercase; 
+.tagline {
+    color: #64748b;
+    font-size: 0.8rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 10px;
 }
 
-/* --- Grid System: Mobile First --- */
+/* --- Feature Cards --- */
 .features-grid {
     display: grid;
-    grid-template-columns: 1fr; /* 1 column mobile */
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
     width: 100%;
-    max-width: 900px;
-    margin: 2rem 0;
-}
-
-@media (min-width: 480px) {
-    .features-grid { grid-template-columns: repeat(2, 1fr); } /* 2 columns tablet */
-}
-
-@media (min-width: 768px) {
-    .features-grid { grid-template-columns: repeat(4, 1fr); } /* 4 columns desktop */
+    margin-bottom: 4rem;
 }
 
 .feature-card {
     background: var(--glass);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(12px);
     border: 1px solid var(--border);
-    padding: 1.5rem;
-    border-radius: 20px;
+    padding: 2rem;
+    border-radius: 24px;
     text-align: center;
-    transition: transform 0.3s ease, border-color 0.3s ease;
+    transition: 0.4s;
 }
 
 .feature-card:hover {
-    transform: translateY(-5px);
     border-color: var(--accent-cyan);
+    background: rgba(34, 211, 238, 0.05);
+    transform: translateY(-10px);
 }
-
-.feature-card h3 { color: var(--accent-cyan); font-size: 0.85rem; margin: 10px 0 5px; }
-.feature-card p { font-size: 0.7rem; color: #94a3b8; }
 
 /* --- Scanner Terminal --- */
 .scanner-card {
     background: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 24px;
-    padding: clamp(1.5rem, 5vw, 2.5rem);
+    border-radius: 28px;
+    padding: 3rem;
     width: 100%;
-    max-width: 750px;
-    margin-bottom: 2rem;
-    transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    max-width: 850px;
+    box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.7);
+    margin-bottom: 5rem;
 }
-
-.terminal-header { display: flex; gap: 8px; margin-bottom: 25px; }
 
 .input-group {
     display: flex;
-    flex-direction: row;
-    background: rgba(0,0,0,0.4);
-    padding: 8px;
-    border-radius: 16px;
+    background: rgba(0,0,0,0.5);
+    padding: 10px;
+    border-radius: 20px;
     border: 1px solid var(--border);
-    gap: 8px;
+    transition: border-color 0.3s;
 }
 
-/* Stack button on very small screens */
-@media (max-width: 400px) {
-    .input-group { flex-direction: column; }
-    .scan-btn { width: 100%; padding: 12px; }
-}
+.input-group:focus-within { border-color: var(--accent-cyan); }
 
-input { 
-    flex: 1; 
-    background: transparent; 
-    border: none; 
-    color: white; 
-    padding: 12px; 
-    outline: none; 
-    font-size: 0.95rem;
+input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #fff;
+    padding: 15px;
+    font-size: 1rem;
+    outline: none;
 }
 
 .scan-btn {
     background: var(--accent-cyan);
-    color: #020617;
+    color: #000;
     border: none;
-    padding: 0 25px;
-    border-radius: 12px;
-    font-weight: 700;
+    padding: 0 30px;
+    border-radius: 14px;
+    font-weight: 800;
     cursor: pointer;
-    transition: all 0.3s ease;
-    min-height: 48px; /* Touch target size */
+    transition: 0.3s;
 }
 
 .scan-btn:hover {
-    background: white;
-    box-shadow: 0 0 20px rgba(34, 211, 238, 0.4);
-    transform: scale(1.02);
+    background: #fff;
+    box-shadow: 0 0 30px var(--accent-cyan);
 }
 
-/* --- AI Side Chat Fixes --- */
+/* --- Chat Assistant Panel --- */
 .side-panel {
     position: fixed;
-    right: -100%; /* Fully hide offscreen */
+    right: -450px;
     top: 0;
-    width: 100%; /* Full width mobile */
-    max-width: 400px; /* Limit on desktop */
+    width: 400px;
     height: 100%;
-    background: rgba(10, 15, 30, 0.98);
-    backdrop-filter: blur(25px);
+    background: #0b0f1a;
     border-left: 1px solid var(--border);
-    transition: 0.5s cubic-bezier(0.19, 1, 0.22, 1);
     display: flex;
     flex-direction: column;
-    z-index: 1000;
+    z-index: 3000;
+    transition: 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+    box-shadow: -20px 0 60px rgba(0,0,0,0.8);
 }
 
 .side-panel.open { right: 0; }
 
-.chat-messages { 
-    flex: 1; 
-    padding: 1.5rem; 
-    overflow-y: auto; 
-    display: flex; 
-    flex-direction: column; 
-    gap: 15px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--accent-blue) transparent;
+.chat-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background: #020617; /* Dark background so messages POP */
 }
 
-.ai-msg { 
-    background: rgba(255,255,255,0.05); 
-    align-self: flex-start; 
-    border-radius: 15px 15px 15px 2px;
-    padding: 12px 16px;
-    border-left: 3px solid var(--accent-cyan);
-    font-size: 0.85rem;
-    max-width: 85%;
-}
-
-.user-msg { 
-    background: var(--accent-blue); 
-    align-self: flex-end; 
-    border-radius: 15px 15px 2px 15px;
-    padding: 12px 16px;
-    font-size: 0.85rem;
-    max-width: 85%;
-    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-}
-
-.chat-input-area {
-    padding: 1.5rem;
-    border-top: 1px solid var(--border);
-    display: flex;
-    gap: 10px;
-}
-
-.chat-input-area input {
+/* Message Bubbles */
+.ai-msg, .bot-msg {
     background: rgba(255,255,255,0.05);
-    border-radius: 10px;
-    padding: 10px;
-    border: 1px solid var(--border);
+    color: var(--accent-cyan);
+    padding: 15px;
+    border-radius: 18px 18px 18px 4px;
+    margin-bottom: 15px;
+    border-left: 3px solid var(--accent-cyan);
+    align-self: flex-start;
 }
 
-/* --- Status Glows --- */
-.danger-glow { 
-    border-color: var(--danger) !important; 
-    box-shadow: 0 0 40px rgba(239, 68, 68, 0.15); 
-}
-.success-glow { 
-    border-color: var(--success) !important; 
-    box-shadow: 0 0 40px rgba(16, 185, 129, 0.15); 
-}
-
-.loading-text { 
-    color: var(--accent-cyan); 
-    font-weight: 700;
-    text-transform: uppercase;
-    font-size: 0.7rem;
-    letter-spacing: 2px;
-    animation: pulse 1.5s infinite; 
+.user-msg {
+    background: var(--accent-blue);
+    color: #fff;
+    padding: 15px;
+    border-radius: 18px 18px 4px 18px;
+    margin-bottom: 15px;
+    align-self: flex-end;
 }
 
-@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
-
-# Updated /chat endpoint in main.py
-@app.post("/chat")
-async def chat(data: dict):
-    user_msg = data.get("message", "").lower()
-    
-    # Logic to handle the AI response
-    if "hi" in user_msg or "hello" in user_msg:
-        response = "Systems active. Scanning perimeter for threats. How can I assist you?"
-    elif "status" in user_msg:
-        response = "Neural Core is Online. Latency 24ms. Protection: Active."
-    elif "help" in user_msg:
-        response = "Paste a URL in the scanner to begin a deep-packet interrogation."
-    else:
-        response = "I am Nexora AI. I specialize in detecting malicious network signatures."
-    
-    return {"response": response}
-.reveal {
-  opacity: 0;
-  transform: translateY(30px);
-  transition: all 0.8s ease-out;
+/* --- Chat Toggle Button (VISIBLE FIX) --- */
+.chat-toggle {
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    width: 65px;
+    height: 65px;
+    background: var(--accent-cyan);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 4000;
+    box-shadow: 0 10px 30px rgba(34, 211, 238, 0.4);
+    transition: 0.3s;
 }
 
-.reveal.active {
-  opacity: 1;
-  transform: translateY(0);
+.chat-toggle:hover {
+    transform: scale(1.1) rotate(5deg);
+    background: #fff;
 }
+
+.chat-toggle svg { stroke: #000; }
+
+/* --- Mobile Responsiveness --- */
+@media (max-width: 768px) {
+    header h1 { font-size: 3rem; }
+    .features-grid { grid-template-columns: 1fr; }
+    .scanner-card { padding: 1.5rem; }
+    .side-panel { width: 100%; right: -100%; }
+    .chat-toggle { bottom: 20px; right: 20px; width: 55px; height: 55px; }
+    .main-content.shrunk { margin-right: 0; opacity: 0.3; }
+}
+
+/* Status Glows */
+.danger-glow { border-color: var(--danger) !important; box-shadow: 0 0 40px rgba(239, 68, 68, 0.3) !important; }
+.success-glow { border-color: var(--success) !important; box-shadow: 0 0 40px rgba(16, 185, 129, 0.3) !important; }
