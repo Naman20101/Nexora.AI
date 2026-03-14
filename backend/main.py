@@ -13,7 +13,7 @@ from fastapi.responses import StreamingResponse
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Nexora Titan-Shield Balanced")
+app = FastAPI(title="Nexora Titan-Shield v9")
 
 app.add_middleware(
     CORSMiddleware,
@@ -34,21 +34,16 @@ AI_CLIENT = openai.OpenAI(
     api_key="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"
 )
 
-# --- ML ENGINE LOAD ---
-MODEL_PATH = "advanced_url_model.pkl"
-model = None
-try:
-    if os.path.exists(MODEL_PATH):
-        model = joblib.load(MODEL_PATH)
-except: pass
-
 # --- SECURITY UTILITIES ---
 
-# 1. EXPANDED TRUST LIST (Common legitimate domains)
+# 1. THE "SAFE INFRASTRUCTURE" REGEX
+# This protects AWS S3, Azure Blobs, and Google Cloud Storage from gibberish filters.
+INFRA_WHITELIST_PATTERN = r"(amazonaws\.com|azure\.com|windows\.net|googleusercontent\.com|firebaseapp\.com|github\.io|vercel\.app)"
+
+# 2. GLOBAL REPUTATION LIST
 TRUSTED_SITES = [
-    "google.com", "google.in", "apple.com", "amazon.in", "amazon.com", 
-    "facebook.com", "fb.me", "fbevents.com", "instagram.com", "whatsapp.com",
-    "microsoft.com", "github.com", "t.co", "bit.ly", "netflix.com"
+    "google.com", "amazon.com", "amazon.in", "amazonaws.com", "fbevents.com", 
+    "fb.me", "t.co", "bit.ly", "microsoft.com", "apple.com", "github.com"
 ]
 
 PROTECTED_BRANDS = ["paypal", "paytm", "phonepe", "gpay", "google", "sbi", "hdfc", "icici", "amazon", "flipkart", "netflix", "facebook", "instagram", "whatsapp", "binance", "coinbase", "apple", "microsoft"]
@@ -61,11 +56,12 @@ def check_url(data: URLInput):
     # Clean URL for matching
     clean_domain = re.sub(r'^https?://(www\.)?', '', url).split('/')[0]
     
-    # 1. TRUSTED SITE BYPASS (The "Don't touch the big guys" rule)
-    if clean_domain in TRUSTED_SITES:
-        return {"url": url, "is_scam": False, "message": "SECURE: Official verified domain."}
+    # 1. INFRASTRUCTURE & TRUSTED BYPASS
+    # If it's a known cloud provider or a trusted site, pass it IMMEDIATELY.
+    if re.search(INFRA_WHITELIST_PATTERN, clean_domain) or any(site in clean_domain for site in TRUSTED_SITES):
+        return {"url": url, "is_scam": False, "message": "SECURE: Verified cloud infrastructure or trusted domain."}
 
-    # 2. STRUCTURE CHECK (Kills 'Nahbri' or 'Imsafw')
+    # 2. STRUCTURE GUARD
     if "." not in url or len(url.split(".")[-1]) < 2:
         return {"url": url, "is_scam": True, "prediction_code": "INVALID", "message": "THREAT: Not a valid web address."}
     
@@ -76,7 +72,7 @@ def check_url(data: URLInput):
     # 3. BRAND IDENTITY DEFENSE (Kills fake brand sites)
     for brand in PROTECTED_BRANDS:
         if brand in url:
-            # If the domain isn't one of our known trusted domains for that brand
+            # If the domain isn't an official one, it's a scam
             if not any(brand in site for site in TRUSTED_SITES):
                  return {"url": url, "is_scam": True, "prediction_code": "BRAND_HIJACK", "message": f"CRITICAL: Fake {brand.upper()} portal detected."}
 
@@ -85,22 +81,12 @@ def check_url(data: URLInput):
         return {"url": url, "is_scam": True, "prediction_code": "GIBBERISH", "message": "THREAT: Malicious repetitive string."}
 
     # 5. ENTROPY/KEYBOARD SMASH CHECK
-    # Checks if the domain name has enough unique characters to be a real word
-    if len(domain_primary) > 7:
+    # Only check entropy for non-cloud, non-trusted domains
+    if len(domain_primary) > 10:
         unique_ratio = len(set(domain_primary)) / len(domain_primary)
-        if unique_ratio < 0.4:
+        if unique_ratio < 0.35:
             return {"url": url, "is_scam": True, "prediction_code": "SMASH_DETECTED", "message": "THREAT: High-risk gibberish domain."}
 
-    # 6. NEURAL INFERENCE (The backup AI)
-    if model:
-        try:
-            feat = [len(url), url.count('-'), url.count('.'), sum(c.isdigit() for c in url), len(re.findall(r'[^a-zA-Z0-9]', url)), 1 if 'https' in url else 0, 1]
-            pred = model.predict([feat])[0]
-            if int(pred) != 31:
-                 return {"url": url, "is_scam": True, "prediction_code": "AI_FLAG", "message": "THREAT: Potential fraud signature matched."}
-        except: pass
-
-    # If it passes all the above, we consider it safe for now
     return {"url": url, "is_scam": False, "message": "Analysis complete: No fraud detected."}
 
 # --- THE AI CHAT ENGINE ---
@@ -109,7 +95,7 @@ async def chat_handler(data: ChatInput):
     def generate():
         stream = AI_CLIENT.chat.completions.create(
             model="meta/llama-3.1-405b-instruct",
-            messages=[{"role": "system", "content": "You are Nexora AI. Concise and elite."}, {"role": "user", "content": data.message}],
+            messages=[{"role": "system", "content": "You are Nexora AI. Tech-focused, concise."}, {"role": "user", "content": data.message}],
             stream=True 
         )
         for chunk in stream:
