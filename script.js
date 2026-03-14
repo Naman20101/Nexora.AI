@@ -1,57 +1,52 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. BACKEND SYNC
     const BACKEND = "https://nexora-ai-a-al-f-d-s-advanced-ai-powered.onrender.com";
     const synth = window.speechSynthesis;
     let shouldSpeakResponse = false; 
 
-    console.log("Nexora AI: System Booting...");
+    console.log("Nexora AI: System Initializing...");
 
-    // 2. UI ELEMENTS (Safeguard against null)
+    // --- SAFETY CHECK: Ensure UI exists ---
     const chatInput = document.getElementById('chatInput');
-    const urlInput = document.getElementById('urlInput');
     const chatBox = document.getElementById('chatBox');
+    const micBtn = document.getElementById('micBtn');
 
-    // --- 3. IDENTITY & VOICE LOGIC ---
+    // 1. VOICE OUTPUT LOGIC
     window.nexoraSpeak = function(text) {
         if (!shouldSpeakResponse) return; 
-        
         synth.cancel(); 
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.rate = 1.0;
-        utterance.pitch = 0.9;
-        
-        // Identity Lock for Naman Reddy's AI
         const voices = synth.getVoices();
         utterance.voice = voices.find(v => v.name.includes('Google UK English Male')) || voices[0];
-        
         synth.speak(utterance);
-        shouldSpeakResponse = false; // Reset flag
+        shouldSpeakResponse = false; 
     };
 
+    // 2. VOICE INPUT LOGIC
     window.startVoice = function() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) return alert("Voice recognition not supported on this browser.");
-
+        if (!SpeechRecognition) return alert("Voice not supported.");
+        
         const recognition = new SpeechRecognition();
         recognition.onstart = () => {
-            document.getElementById('micBtn')?.classList.add('listening');
-            shouldSpeakResponse = true; // Permitted to talk
+            if(micBtn) micBtn.classList.add('listening');
+            shouldSpeakResponse = true; 
         };
         recognition.onresult = (event) => {
             const transcript = event.results[0][0].transcript;
-            if (chatInput) chatInput.value = transcript;
+            if(chatInput) chatInput.value = transcript;
             window.sendChatMessage(true); 
         };
         recognition.start();
     };
 
-    // --- 4. CHAT ENGINE ---
+    // 3. CHAT ENGINE (Identity Lock Included)
     window.sendChatMessage = async function(isFromVoice = false) {
         if (!chatInput || !chatBox) return;
         const msg = chatInput.value.trim();
         if (!msg) return;
 
-        shouldSpeakResponse = isFromVoice; // Voice in = Voice out
+        shouldSpeakResponse = isFromVoice; 
         chatBox.innerHTML += `<div class="user-msg"><b>Naman:</b> ${msg}</div>`;
         chatInput.value = '';
         
@@ -66,58 +61,44 @@ document.addEventListener("DOMContentLoaded", () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ message: msg })
             });
-
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let fullText = "";
-            const contentSpan = aiMsgDiv.querySelector('.ai-content');
-
             while (true) {
                 const { value, done } = await reader.read();
                 if (done) break;
                 fullText += decoder.decode(value);
-                contentSpan.innerText = fullText;
+                aiMsgDiv.querySelector('.ai-content').innerText = fullText;
                 chatBox.scrollTop = chatBox.scrollHeight;
             }
             window.nexoraSpeak(fullText);
         } catch (err) {
-            aiMsgDiv.querySelector('.ai-content').innerText = "Neural link severed. Wake up Render backend.";
+            aiMsgDiv.querySelector('.ai-content').innerText = "Backend is sleeping. Please wait 30s.";
         }
     };
 
-    // --- 5. SCANNER ENGINE ---
+    // 4. SCANNER LOGIC
     window.scanURL = async function() {
+        const urlIn = document.getElementById('urlInput');
         const display = document.getElementById('result-display');
-        if (!urlInput || !display) return;
-        
-        const url = urlInput.value.trim();
+        if (!urlIn || !display) return;
         display.innerHTML = "ANALYZING...";
-
         try {
             const res = await fetch(`${BACKEND}/check-url`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ url })
+                body: JSON.stringify({ url: urlIn.value })
             });
             const data = await res.json();
-            display.innerHTML = data.is_scam ? `⚠️ THREAT: ${data.message}` : `✅ SECURE`;
-        } catch (e) {
-            display.innerHTML = "Backend sleeping. Wake it up first.";
-        }
+            display.innerHTML = data.is_scam ? `⚠️ ${data.message}` : `✅ SECURE`;
+        } catch (e) { display.innerHTML = "Offline."; }
     };
 
-    // --- 6. GLOBAL CONTROLS ---
-    window.toggleChat = () => {
-        document.getElementById('sidePanel')?.classList.toggle('open');
-    };
-
-    // Event Listeners for Enter Keys
+    // 5. EVENT LISTENERS
     chatInput?.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            shouldSpeakResponse = false; // Typing is silent
+            shouldSpeakResponse = false;
             sendChatMessage(false);
         }
     });
-
-    urlInput?.addEventListener('keypress', (e) => { if (e.key === 'Enter') scanURL(); });
 });
