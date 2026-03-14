@@ -4,10 +4,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const synth = window.speechSynthesis;
     let shouldSpeakResponse = false; 
 
-    console.log("Nexora AI: System Booting. Creator: Naman Reddy.");
+    console.log("Nexora AI: System Booting. Internal Core: Naman Reddy.");
 
-    // --- 2. REVEAL LOGIC (Fixes the Black Screen) ---
-    // This forces the hidden elements to show up immediately
+    // --- 2. REVEAL LOGIC ---
     const revealElements = () => {
         document.querySelectorAll('.reveal').forEach(el => {
             el.classList.add('active');
@@ -15,7 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
             el.style.transform = "translateY(0)";
         });
     };
-    revealElements(); // Run immediately to kill the black screen
+    revealElements();
 
     // --- 3. UI HELPERS ---
     window.toggleChat = () => {
@@ -23,7 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (panel) panel.classList.toggle('open');
     };
 
-    // --- 4. VOICE OUTPUT (TTS) ---
+    // --- 4. VOICE OUTPUT ---
     window.nexoraSpeak = function(text) {
         if (!shouldSpeakResponse) return; 
         synth.cancel(); 
@@ -35,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
         shouldSpeakResponse = false; 
     };
 
-    // --- 5. VOICE INPUT (STT) ---
+    // --- 5. VOICE INPUT ---
     window.startVoice = function() {
         const micBtn = document.getElementById('micBtn');
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -57,22 +56,23 @@ document.addEventListener("DOMContentLoaded", () => {
         recognition.start();
     };
 
-    // --- 6. CHAT ENGINE ---
+    // --- 6. CHAT ENGINE (Public Neutral Version) ---
     window.sendChatMessage = async function(isFromVoice = false) {
         const input = document.getElementById('chatInput');
-        const box = document.getElementById('chatBox'); // Ensure this matches <div id="chatBox">
-        if (!input || !box) return console.error("Chat UI elements missing");
+        const box = document.getElementById('chatBox');
+        if (!input || !box) return;
 
         const msg = input.value.trim();
         if (!msg) return;
 
         shouldSpeakResponse = isFromVoice; 
-        box.innerHTML += `<div class="user-msg"><b>Naman:</b> ${msg}</div>`;
+        // CHANGED: Label is now "You" instead of "Naman" for public users
+        box.innerHTML += `<div class="user-msg"><b>You:</b> ${msg}</div>`;
         input.value = '';
 
         const aiMsgDiv = document.createElement('div');
         aiMsgDiv.className = 'ai-msg';
-        aiMsgDiv.innerHTML = `<b>Nexora:</b> <span class="ai-content">Connecting...</span>`;
+        aiMsgDiv.innerHTML = `<b>Nexora:</b> <span class="ai-content">...</span>`;
         box.appendChild(aiMsgDiv);
         box.scrollTop = box.scrollHeight;
 
@@ -85,18 +85,23 @@ document.addEventListener("DOMContentLoaded", () => {
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let fullText = "";
+            const contentSpan = aiMsgDiv.querySelector('.ai-content');
+
             while (true) {
                 const { value, done } = await reader.read();
                 if (done) break;
+                
+                // Clear the "..." when the first chunk arrives
+                if (fullText === "") contentSpan.innerText = "";
+                
                 fullText += decoder.decode(value);
-                const contentSpan = aiMsgDiv.querySelector('.ai-content');
-                if(contentSpan) contentSpan.innerText = fullText;
+                contentSpan.innerText = fullText;
                 box.scrollTop = box.scrollHeight;
             }
             window.nexoraSpeak(fullText);
         } catch (err) {
             const contentSpan = aiMsgDiv.querySelector('.ai-content');
-            if(contentSpan) contentSpan.innerText = "Neural link delayed. Wake up Render backend.";
+            if(contentSpan) contentSpan.innerText = "Connection lost. Please try again in a moment.";
         }
     };
 
@@ -105,7 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const urlIn = document.getElementById('urlInput');
         const display = document.getElementById('result-display');
         if (!urlIn || !display) return;
-        display.innerHTML = "ANALYZING...";
+        display.innerHTML = "INTERROGATING NEURAL CORE...";
         try {
             const res = await fetch(`${BACKEND}/check-url`, {
                 method: "POST",
@@ -114,13 +119,13 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             const data = await res.json();
             display.innerHTML = data.is_scam ? `⚠️ ${data.message}` : `✅ SECURE`;
-        } catch (e) { display.innerHTML = "Offline. Please wake up the backend."; }
+        } catch (e) { display.innerHTML = "Offline. System booting up."; }
     };
 
     // --- 8. EVENT LISTENERS ---
     document.getElementById('chatInput')?.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            shouldSpeakResponse = false;
+            shouldSpeakResponse = false; // Typing remains silent
             sendChatMessage(false);
         }
     });
