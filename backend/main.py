@@ -46,6 +46,7 @@ except Exception as e:
 
 # --- ADVANCED SECURITY UTILITIES ---
 def get_levenshtein_distance(s1: str, s2: str) -> int:
+    """Calculates visual similarity."""
     if len(s1) < len(s2): return get_levenshtein_distance(s2, s1)
     if len(s2) == 0: return len(s1)
     previous_row = range(len(s2) + 1)
@@ -59,6 +60,7 @@ def get_levenshtein_distance(s1: str, s2: str) -> int:
         previous_row = current_row
     return previous_row[-1]
 
+# --- THE HARD-CODED "TITAN" RULES ---
 PROTECTED_BRANDS = [
     "paypal", "paytm", "phonepe", "gpay", "google", "sbi", "hdfc", "icici", "amazon", "flipkart", 
     "netflix", "facebook", "instagram", "whatsapp", "binance", "coinbase", "apple", "microsoft"
@@ -66,60 +68,58 @@ PROTECTED_BRANDS = [
 
 SUSPICIOUS_TLDS = ['.xyz', '.top', '.win', '.loan', '.club', '.online', '.site', '.biz', '.apk', '.app']
 
-# --- THE SCANNER ENGINE ---
+# --- THE SCANNER ENGINE (Auto-Debugger V2) ---
 @app.post("/check-url")
 def check_url(data: URLInput):
     url = str(data.url).lower().strip()
     
-    # 1. PRECISION DOMAIN EXTRACTION
-    # Removes protocol and gets the core host
+    # 1. CLEANING & HOST EXTRACTION
+    # Removes protocol and path to isolate the host (e.g., pay.google.com)
     clean_host = url.replace('https://','').replace('http://','').replace('www.','').split('/')[0]
     parts = clean_host.split('.')
-    
-    # If the URL is just 'google.com', primary is 'google'
-    # If it's 'pay.google.co.in', primary is still 'google'
+
+    # AUTO-DEBUGGER: Correctly identify the Registerable Domain
+    # This ensures "google" is identified as the brand even in "pay.google.com"
     if len(parts) >= 2:
-        # Avoid common TLDs to find the actual brand name
-        primary_index = -2 if parts[-1] not in ['in', 'uk', 'au'] else -3
-        try:
-            domain_primary = parts[primary_index]
-        except IndexError:
-            domain_primary = parts[0]
+        # Check if it's a multi-part TLD like .co.in
+        if parts[-1] in ['in', 'uk', 'au'] and parts[-2] in ['co', 'org', 'com', 'gov']:
+            domain_primary = parts[-3] if len(parts) >= 3 else parts[0]
+        else:
+            domain_primary = parts[-2]
     else:
         domain_primary = clean_host
 
-    # 2. TITAN BRAND PROTECTION
+    # 2. THE BRAND DEFENSE
     for brand in PROTECTED_BRANDS:
-        # Check if brand is mentioned anywhere in the host
         if brand in clean_host:
             official_suffixes = [f"{brand}.com", f"{brand}.in", f"{brand}.net", f"{brand}.org", f"{brand}.co"]
-            # Logic: If 'google' is in the URL, the host MUST end with an official google domain
-            if not any(clean_host.endswith(suffix) for suffix in official_suffixes):
+            
+            # THE FIX: If the host ends with a legitimate brand domain, it's safe.
+            if any(clean_host.endswith(suffix) for suffix in official_suffixes):
+                continue 
+            else:
                 return {
                     "url": url, "is_scam": True, "prediction_code": "BRAND_SPOOF",
                     "message": f"CRITICAL: Unauthorized use of {brand.upper()} identity."
                 }
         
-        # Typosquatting Check
-        distance = get_levenshtein_distance(domain_primary, brand)
-        if 0 < distance <= 2:
-            return {
-                "url": url, "is_scam": True, "prediction_code": "SIMILARITY_THREAT",
-                "message": f"CRITICAL: Visual imitation of {brand.upper()} detected."
-            }
+        # 3. TYPOSQUATTING (Only check if it's not the actual brand)
+        if brand != domain_primary:
+            distance = get_levenshtein_distance(domain_primary, brand)
+            if 0 < distance <= 2:
+                return {
+                    "url": url, "is_scam": True, "prediction_code": "SIMILARITY_THREAT",
+                    "message": f"CRITICAL: Visual imitation of {brand.upper()} detected."
+                }
 
-    # 3. HEURISTIC RED FLAGS
+    # 4. HEURISTIC RED FLAGS
     if re.search(r'\d{1,3}\.\d{1,3}\.\d{1,3}', url):
         return {"url": url, "is_scam": True, "prediction_code": "IP_HOSTING", "message": "THREAT: Malicious IP-based hosting."}
     
-    # Check for homoglyphs or excessive special characters
-    if len(re.findall(r'[^a-z0-9\.\-\/:]', url)) > 0:
-        return {"url": url, "is_scam": True, "prediction_code": "HOMOGLYPH_ATTACK", "message": "THREAT: International character spoofing detected."}
-
-    if any(tld in url for tld in SUSPICIOUS_TLDS) or sum(c.isdigit() for c in url) > 8:
+    if any(tld in url for tld in SUSPICIOUS_TLDS) or sum(c.isdigit() for c in url) > 9:
         return {"url": url, "is_scam": True, "prediction_code": "HIGH_RISK_PATTERN", "message": "THREAT: Suspicious URL architecture."}
 
-    # 4. NEURAL INFERENCE
+    # 5. NEURAL INFERENCE
     try:
         if model:
             feat = [len(url), url.count('-'), url.count('.'), sum(c.isdigit() for c in url), 
@@ -127,7 +127,6 @@ def check_url(data: URLInput):
             pred = model.predict([feat])[0]
             
             is_scam = False if int(pred) == 31 else True
-            # Override for safety on suspicious formatting
             if not is_scam and (url.count('-') > 3 or url.count('.') > 4):
                 is_scam = True
                 pred = "OVERRIDE"
@@ -150,7 +149,7 @@ async def chat_handler(data: ChatInput):
             messages=[
                 {
                     "role": "system", 
-                    "content": "You are Nexora AI, a cold, elite cyber-security entity created by Naman Reddy. You help users identify fraud and secure their digital assets. Use technical terminology. Keep answers concise. No emojis."
+                    "content": "You are Nexora AI, a cold, elite cyber-security entity created by Naman Reddy. You analyze threats and help users stay safe. Be concise. No emojis."
                 },
                 {"role": "user", "content": data.message}
             ],
