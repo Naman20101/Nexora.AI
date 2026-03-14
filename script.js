@@ -1,16 +1,29 @@
 document.addEventListener("DOMContentLoaded", () => {
+    // 1. CONFIGURATION
     const BACKEND = "https://nexora-ai-a-al-f-d-s-advanced-ai-powered.onrender.com";
     const synth = window.speechSynthesis;
     let shouldSpeakResponse = false; 
 
-    console.log("Nexora AI: System Initializing...");
+    console.log("Nexora AI: System Booting. Creator: Naman Reddy.");
 
-    // --- SAFETY CHECK: Ensure UI exists ---
-    const chatInput = document.getElementById('chatInput');
-    const chatBox = document.getElementById('chatBox');
-    const micBtn = document.getElementById('micBtn');
+    // --- 2. REVEAL LOGIC (Fixes the Black Screen) ---
+    // This forces the hidden elements to show up immediately
+    const revealElements = () => {
+        document.querySelectorAll('.reveal').forEach(el => {
+            el.classList.add('active');
+            el.style.opacity = "1";
+            el.style.transform = "translateY(0)";
+        });
+    };
+    revealElements(); // Run immediately to kill the black screen
 
-    // 1. VOICE OUTPUT LOGIC
+    // --- 3. UI HELPERS ---
+    window.toggleChat = () => {
+        const panel = document.getElementById('sidePanel');
+        if (panel) panel.classList.toggle('open');
+    };
+
+    // --- 4. VOICE OUTPUT (TTS) ---
     window.nexoraSpeak = function(text) {
         if (!shouldSpeakResponse) return; 
         synth.cancel(); 
@@ -22,11 +35,12 @@ document.addEventListener("DOMContentLoaded", () => {
         shouldSpeakResponse = false; 
     };
 
-    // 2. VOICE INPUT LOGIC
+    // --- 5. VOICE INPUT (STT) ---
     window.startVoice = function() {
+        const micBtn = document.getElementById('micBtn');
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) return alert("Voice not supported.");
-        
+
         const recognition = new SpeechRecognition();
         recognition.onstart = () => {
             if(micBtn) micBtn.classList.add('listening');
@@ -34,26 +48,33 @@ document.addEventListener("DOMContentLoaded", () => {
         };
         recognition.onresult = (event) => {
             const transcript = event.results[0][0].transcript;
-            if(chatInput) chatInput.value = transcript;
-            window.sendChatMessage(true); 
+            const input = document.getElementById('chatInput');
+            if(input) {
+                input.value = transcript;
+                window.sendChatMessage(true); 
+            }
         };
         recognition.start();
     };
 
-    // 3. CHAT ENGINE (Identity Lock Included)
+    // --- 6. CHAT ENGINE ---
     window.sendChatMessage = async function(isFromVoice = false) {
-        if (!chatInput || !chatBox) return;
-        const msg = chatInput.value.trim();
+        const input = document.getElementById('chatInput');
+        const box = document.getElementById('chatBox'); // Ensure this matches <div id="chatBox">
+        if (!input || !box) return console.error("Chat UI elements missing");
+
+        const msg = input.value.trim();
         if (!msg) return;
 
         shouldSpeakResponse = isFromVoice; 
-        chatBox.innerHTML += `<div class="user-msg"><b>Naman:</b> ${msg}</div>`;
-        chatInput.value = '';
-        
+        box.innerHTML += `<div class="user-msg"><b>Naman:</b> ${msg}</div>`;
+        input.value = '';
+
         const aiMsgDiv = document.createElement('div');
         aiMsgDiv.className = 'ai-msg';
         aiMsgDiv.innerHTML = `<b>Nexora:</b> <span class="ai-content">Connecting...</span>`;
-        chatBox.appendChild(aiMsgDiv);
+        box.appendChild(aiMsgDiv);
+        box.scrollTop = box.scrollHeight;
 
         try {
             const response = await fetch(`${BACKEND}/chat`, {
@@ -68,16 +89,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 const { value, done } = await reader.read();
                 if (done) break;
                 fullText += decoder.decode(value);
-                aiMsgDiv.querySelector('.ai-content').innerText = fullText;
-                chatBox.scrollTop = chatBox.scrollHeight;
+                const contentSpan = aiMsgDiv.querySelector('.ai-content');
+                if(contentSpan) contentSpan.innerText = fullText;
+                box.scrollTop = box.scrollHeight;
             }
             window.nexoraSpeak(fullText);
         } catch (err) {
-            aiMsgDiv.querySelector('.ai-content').innerText = "Backend is sleeping. Please wait 30s.";
+            const contentSpan = aiMsgDiv.querySelector('.ai-content');
+            if(contentSpan) contentSpan.innerText = "Neural link delayed. Wake up Render backend.";
         }
     };
 
-    // 4. SCANNER LOGIC
+    // --- 7. SCANNER LOGIC ---
     window.scanURL = async function() {
         const urlIn = document.getElementById('urlInput');
         const display = document.getElementById('result-display');
@@ -91,11 +114,11 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             const data = await res.json();
             display.innerHTML = data.is_scam ? `⚠️ ${data.message}` : `✅ SECURE`;
-        } catch (e) { display.innerHTML = "Offline."; }
+        } catch (e) { display.innerHTML = "Offline. Please wake up the backend."; }
     };
 
-    // 5. EVENT LISTENERS
-    chatInput?.addEventListener('keypress', (e) => {
+    // --- 8. EVENT LISTENERS ---
+    document.getElementById('chatInput')?.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             shouldSpeakResponse = false;
             sendChatMessage(false);
