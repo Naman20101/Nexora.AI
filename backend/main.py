@@ -72,20 +72,22 @@ SUSPICIOUS_TLDS = ['.xyz', '.top', '.win', '.loan', '.club', '.online', '.site',
 def check_url(data: URLInput):
     url = str(data.url).lower().strip()
     
-    # --- NEW STRICT FILTER ---
-    # If there is no dot (e.g., 'imsafe'), it's not a real URL. Flag it.
-    if "." not in url:
+    # --- 1. THE STRUCTURE GUARD (NEW) ---
+    # Blocks inputs like "Nahbri" or "imsafe" because they lack a domain dot.
+    if "." not in url or len(url.split(".")[-1]) < 2:
         return {
-            "url": url, "is_scam": True, "prediction_code": "INVALID_STRUCTURE",
-            "message": "THREAT: Input is not a valid domain structure."
+            "url": url, 
+            "is_scam": True, 
+            "prediction_code": "INVALID_STRUCTURE",
+            "message": "THREAT: Input is not a valid URL structure. Missing domain suffix (e.g. .com)."
         }
     
-    # 1. THE SECRET SAUCE: Professional Extraction
+    # 2. THE SECRET SAUCE: Professional Extraction
     ext = tldextract.extract(url)
     domain_primary = ext.domain  
     full_registered_domain = f"{ext.domain}.{ext.suffix}" 
 
-    # 2. BRAND DEFENSE
+    # 3. BRAND DEFENSE
     for brand in PROTECTED_BRANDS:
         if brand in url:
             official_domains = [f"{brand}.com", f"{brand}.in", f"{brand}.net", f"{brand}.org", f"{brand}.co"]
@@ -97,7 +99,7 @@ def check_url(data: URLInput):
             else:
                 continue
 
-        # 3. TYPOSQUATTING CHECK
+        # 4. TYPOSQUATTING CHECK
         distance = get_levenshtein_distance(domain_primary, brand)
         if 0 < distance <= 2:
             return {
@@ -105,20 +107,26 @@ def check_url(data: URLInput):
                 "message": f"CRITICAL: Visual imitation of {brand.upper()} detected."
             }
 
-    # 4. HEURISTIC RED FLAGS
+    # 5. HEURISTIC RED FLAGS
     if re.search(r'\d{1,3}\.\d{1,3}\.\d{1,3}', url):
         return {"url": url, "is_scam": True, "prediction_code": "IP_HOSTING", "message": "THREAT: Malicious IP-based hosting."}
     
     if any(tld in url for tld in SUSPICIOUS_TLDS) or sum(c.isdigit() for c in url) > 10:
         return {"url": url, "is_scam": True, "prediction_code": "HIGH_RISK_PATTERN", "message": "THREAT: Suspicious URL architecture."}
 
-    # 5. NEURAL INFERENCE
+    # 6. NEURAL INFERENCE
     try:
         if model:
             feat = [len(url), url.count('-'), url.count('.'), sum(c.isdigit() for c in url), 
                     len(re.findall(r'[^a-zA-Z0-9]', url)), 1 if 'https' in url else 0, 1]
             pred = model.predict([feat])[0]
             is_scam = False if int(pred) == 31 else True
+            
+            # Additional safety: If domain is extremely short and not a known brand, block it.
+            if not is_scam and len(domain_primary) < 5:
+                is_scam = True
+                pred = "SHORT_UNVERIFIED"
+
             return {
                 "url": url, "is_scam": is_scam, "prediction_code": str(pred),
                 "message": "SECURE: Domain integrity verified." if not is_scam else "THREAT: Neural match found."
