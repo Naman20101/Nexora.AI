@@ -2,14 +2,13 @@ import logging
 import re
 import tldextract 
 import openai
-import math
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from fastapi.responses import StreamingResponse
 
 logging.basicConfig(level=logging.INFO)
-app = FastAPI(title="Nexora Titan-Shield v11.INFINITE")
+app = FastAPI(title="Nexora Titan-Shield v9.RESTORATION")
 
 app.add_middleware(
     CORSMiddleware,
@@ -30,45 +29,45 @@ AI_CLIENT = openai.OpenAI(
     api_key="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"
 )
 
-# --- INFINITE INTELLIGENCE ---
-INFRA_WHITELIST = r"(amazonaws\.com|azure\.com|windows\.net|googleusercontent\.com|github\.io|vercel\.app)"
-TRUSTED_DOMAINS = {"google.com", "amazon.com", "amazon.in", "microsoft.com", "apple.com", "github.com", "paypal.com", "facebook.com"}
-PROTECTED_BRANDS = ["paypal", "paytm", "phonepe", "gpay", "google", "sbi", "hdfc", "icici", "amazon", "netflix", "binance"]
+# --- THE TOP NOTCH SECURITY CONSTANTS ---
+INFRA_WHITELIST = r"(amazonaws\.com|azure\.com|windows\.net|googleusercontent\.com|firebaseapp\.com|github\.io|vercel\.app)"
+TRUSTED_SITES = ["google.com", "amazon.com", "amazon.in", "microsoft.com", "apple.com", "github.com", "paypal.com", "facebook.com"]
+PROTECTED_BRANDS = ["paypal", "paytm", "phonepe", "gpay", "google", "sbi", "hdfc", "icici", "amazon", "flipkart", "netflix", "facebook", "instagram", "whatsapp", "binance", "coinbase", "apple", "microsoft"]
 
 @app.post("/check-url")
 def check_url(data: URLInput):
     url = str(data.url).lower().strip()
     
-    # 1. CLEANING & NORMALIZATION
-    # This converts "paypai" (with uppercase I) to standard "paypai" for checking
+    # Normalize for Homograph Attacks (The PaypaI fix)
     normalized_url = url.replace('i', 'l').replace('1', 'l').replace('0', 'o')
     clean_domain = re.sub(r'^https?://(www\.)?', '', url).split('/')[0]
     
-    # 2. TRUSTED BYPASS
-    if re.search(INFRA_WHITELIST, clean_domain) or any(site == clean_domain for site in TRUSTED_DOMAINS):
-        return {"is_scam": False, "message": "SECURE: Verified infrastructure."}
+    # 1. Trusted Bypass
+    if re.search(INFRA_WHITELIST, clean_domain) or any(site == clean_domain for site in TRUSTED_SITES):
+        return {"url": url, "is_scam": False, "message": "SECURE: Verified Domain."}
 
-    # 3. INFINITE BRAND PROTECTION (The "PaypaI" Fix)
-    # We check both the raw URL and the normalized URL for brand names
+    # 2. Invalid Structure
+    if "." not in clean_domain:
+        return {"url": url, "is_scam": True, "message": "THREAT: Malformed URL."}
+
+    # 3. Brand Identity Check (V9 Logic)
     for brand in PROTECTED_BRANDS:
         if brand in url or brand in normalized_url:
-            # If the brand is present but the domain isn't the official one:
-            if not any(brand in site for site in TRUSTED_DOMAINS):
-                return {"is_scam": True, "message": f"CRITICAL: Unauthorized {brand.upper()} impersonation detected."}
+            if not any(brand in site for site in TRUSTED_SITES):
+                return {"url": url, "is_scam": True, "message": f"CRITICAL: Unauthorized {brand.upper()} brand detected."}
 
-    # 4. SUSPICIOUS KEYWORDS + UNTRUSTED DOMAIN
-    # Flags words like 'verify', 'login', 'secure' if they aren't on Google/Amazon
-    scam_keywords = ["verify", "login", "update", "secure", "account", "banking"]
-    if any(word in url for word in scam_keywords):
-        return {"is_scam": True, "message": "THREAT: Suspicious credential-harvesting pattern."}
-
-    # 5. GIBBERISH & REPETITION
+    # 4. Gibberish & Entropy
     ext = tldextract.extract(url)
-    dom = ext.domain
-    if re.search(r'(.)\1\1', dom) or (len(set(dom)) / len(dom) < 0.55 if len(dom) > 4 else False):
-        return {"is_scam": True, "message": "THREAT: Malicious gibberish/entropy detected."}
+    domain_primary = ext.domain  
+    if re.search(r'(.)\1\1\1', domain_primary): # Repetition check
+        return {"url": url, "is_scam": True, "message": "THREAT: Malicious repetitive string."}
 
-    return {"is_scam": False, "message": "Analysis complete: No fraud detected."}
+    if len(domain_primary) > 10:
+        unique_ratio = len(set(domain_primary)) / len(domain_primary)
+        if unique_ratio < 0.35:
+            return {"url": url, "is_scam": True, "message": "THREAT: Gibberish/Keyboard Smash detected."}
+
+    return {"url": url, "is_scam": False, "message": "Analysis complete: No fraud detected."}
 
 @app.post("/chat")
 async def chat_handler(data: ChatInput):
@@ -76,11 +75,12 @@ async def chat_handler(data: ChatInput):
         stream = AI_CLIENT.chat.completions.create(
             model="meta/llama-3.1-405b-instruct",
             messages=[
-                {"role": "system", "content": "You are Nexora.AI, a security system built by Naman Reddy. Technical and neutral."},
+                {"role": "system", "content": "You are Nexora AI. Built by Naman Reddy. Professional and concise."},
                 {"role": "user", "content": data.message}
             ],
             stream=True 
         )
         for chunk in stream:
-            if chunk.choices[0].delta.content: yield chunk.choices[0].delta.content
+            if chunk.choices[0].delta.content:
+                yield chunk.choices[0].delta.content
     return StreamingResponse(generate(), media_type="text/plain")
