@@ -1,7 +1,6 @@
 import logging
 import os
 import re
-import joblib
 import tldextract 
 import openai
 from fastapi import FastAPI
@@ -9,11 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from fastapi.responses import StreamingResponse
 
-# --- INITIALIZATION ---
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-app = FastAPI(title="Nexora Titan-Shield v10.MAX")
+app = FastAPI(title="Nexora Titan-Shield v10")
 
 app.add_middleware(
     CORSMiddleware,
@@ -28,84 +24,58 @@ class URLInput(BaseModel):
 
 class ChatInput(BaseModel):
     message: str
-    is_voice: bool = False 
+    is_voice: bool = False # Added for JS sync
 
 AI_CLIENT = openai.OpenAI(
     base_url="https://integrate.api.nvidia.com/v1",
     api_key="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"
 )
 
-# --- SECURITY UTILITIES ---
+# --- YOUR ORIGINAL SECURITY UTILITIES (RESTORED) ---
 INFRA_WHITELIST_PATTERN = r"(amazonaws\.com|azure\.com|windows\.net|googleusercontent\.com|firebaseapp\.com|github\.io|vercel\.app)"
-
-TRUSTED_SITES = [
-    "google.com", "amazon.com", "amazon.in", "amazonaws.com", "fbevents.com", 
-    "fb.me", "t.co", "bit.ly", "microsoft.com", "apple.com", "github.com"
-]
-
+TRUSTED_SITES = ["google.com", "amazon.com", "amazon.in", "amazonaws.com", "fbevents.com", "fb.me", "t.co", "bit.ly", "microsoft.com", "apple.com", "github.com"]
 PROTECTED_BRANDS = ["paypal", "paytm", "phonepe", "gpay", "google", "sbi", "hdfc", "icici", "amazon", "flipkart", "netflix", "facebook", "instagram", "whatsapp", "binance", "coinbase", "apple", "microsoft"]
 
-# --- THE SCANNER ENGINE (MAX SENSITIVITY) ---
 @app.post("/check-url")
 def check_url(data: URLInput):
     url = str(data.url).lower().strip()
-    
-    # 1. Clean Domain Extraction
     clean_domain = re.sub(r'^https?://(www\.)?', '', url).split('/')[0]
     
-    # 2. Trusted Bypass (If it's officially Google/Amazon, it's safe)
+    # 1. Trusted Bypass
     if re.search(INFRA_WHITELIST_PATTERN, clean_domain) or any(site in clean_domain for site in TRUSTED_SITES):
         return {"url": url, "is_scam": False, "message": "SECURE: Verified infrastructure."}
 
-    # 3. Structure Guard
-    if "." not in clean_domain or len(clean_domain.split(".")[-1]) < 2:
-        return {"url": url, "is_scam": True, "message": "THREAT: Invalid URL structure."}
+    # 2. Structure Guard
+    if "." not in url or len(url.split(".")[-1]) < 2:
+        return {"url": url, "is_scam": True, "message": "THREAT: Invalid web address."}
     
     ext = tldextract.extract(url)
     domain_primary = ext.domain  
 
-    # 4. Brand Hijack Defense
+    # 3. Brand Identity Defense
     for brand in PROTECTED_BRANDS:
-        if brand in url:
-            if not any(brand in site for site in TRUSTED_SITES):
-                 return {"url": url, "is_scam": True, "message": f"CRITICAL: Fake {brand.upper()} portal detected."}
+        if brand in url and not any(brand in site for site in TRUSTED_SITES):
+            return {"url": url, "is_scam": True, "message": f"CRITICAL: Fake {brand.upper()} portal detected."}
 
-    # 5. ATMOST SECURITY: Repetitive Character Check
-    # Flags anything with 3+ repeated chars (e.g., Gabhhhh)
-    if re.search(r'(.)\1\1', domain_primary):
-        return {"url": url, "is_scam": True, "message": "THREAT: Malicious repetitive patterns detected."}
+    # 4. Repetition Killer
+    if re.search(r'(.)\1\1\1', domain_primary):
+        return {"url": url, "is_scam": True, "message": "THREAT: Malicious repetitive string."}
 
-    # 6. ATMOST SECURITY: Entropy / Keyboard Smash (Strict 0.5 ratio)
-    # Most real websites have a unique character ratio of 0.6 or higher.
-    # Keyboard smashes (asdfasdf) or gibberish (gabhh) have very low ratios.
-    if len(domain_primary) > 4:
-        unique_chars = len(set(domain_primary))
-        total_chars = len(domain_primary)
-        unique_ratio = unique_chars / total_chars
-        
-        if unique_ratio < 0.50: 
-            return {"url": url, "is_scam": True, "message": "THREAT: High-risk gibberish/keyboard-smash detected."}
+    # 5. Entropy Check
+    if len(domain_primary) > 10:
+        unique_ratio = len(set(domain_primary)) / len(domain_primary)
+        if unique_ratio < 0.35:
+            return {"url": url, "is_scam": True, "message": "THREAT: High-risk gibberish domain."}
 
     return {"url": url, "is_scam": False, "message": "Analysis complete: No fraud detected."}
 
-# --- THE CHAT ENGINE ---
 @app.post("/chat")
 async def chat_handler(data: ChatInput):
-    tone = "conversational" if data.is_voice else "concise"
-
     def generate():
         stream = AI_CLIENT.chat.completions.create(
             model="meta/llama-3.1-405b-instruct",
             messages=[
-                {
-                    "role": "system", 
-                    "content": (
-                        "Your name is Nexora.AI. Created by Naman Reddy. "
-                        "You are a public security assistant. Do NOT assume the user is Naman. "
-                        "Stay professional. If asked who built you, say Naman Reddy. "
-                        f"Style: {tone}."
-                    )
-                },
+                {"role": "system", "content": "You are Nexora.AI, created by Naman Reddy. Be professional. Respond via voice if is_voice is true."},
                 {"role": "user", "content": data.message}
             ],
             stream=True 
@@ -113,5 +83,4 @@ async def chat_handler(data: ChatInput):
         for chunk in stream:
             if chunk.choices[0].delta.content:
                 yield chunk.choices[0].delta.content
-
     return StreamingResponse(generate(), media_type="text/plain")
