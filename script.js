@@ -10,8 +10,9 @@ window.sendChatMessage = async function(isFromVoice = false) {
 
     const aiDiv = document.createElement('div');
     aiDiv.className = 'ai-msg';
-    // Initial loading state
-    aiDiv.innerHTML = `<b>Nexora:</b> <span class="ai-content">...</span>`;
+    
+    // NEW: Added the round spinner symbol here
+    aiDiv.innerHTML = `<b>Nexora:</b> <span class="ai-content"><div class="spinner"></div></span>`;
     box.appendChild(aiDiv);
     box.scrollTop = box.scrollHeight;
 
@@ -32,25 +33,28 @@ window.sendChatMessage = async function(isFromVoice = false) {
             const { value, done } = await reader.read();
             if (done) break;
 
-            // SPEED FIX: Clear "..." immediately when data starts flowing
+            // SPEED FIX: Remove spinner/dots immediately when the first letter arrives
             if (firstChunk) {
-                contentSpan.innerText = "";
+                contentSpan.innerHTML = ""; // Use innerHTML to clear the spinner div
                 firstChunk = false;
             }
 
             fullText += decoder.decode(value, { stream: true });
             contentSpan.innerText = fullText;
-            
-            // Optimization: Only scroll if the user isn't manually scrolling up
             box.scrollTop = box.scrollHeight;
         }
-        window.nexoraSpeak(fullText);
+        
+        if (shouldSpeakResponse) {
+            window.nexoraSpeak(fullText);
+        }
     } catch (err) {
-        aiDiv.querySelector('.ai-content').innerText = "Neural Link timed out. Try again.";
+        contentSpan.innerText = "Neural Link timed out. Try again.";
     }
 };
-// Add this at the bottom of your DOMContentLoaded listener
+
+// IMPROVED PING: Added headers to ensure the backend accepts the warm-up call
 fetch(`${BACKEND}/check-url`, { 
     method: "POST", 
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({url: "ping.com"}) 
-}).then(() => console.log("Backend Warmed Up"));
+}).then(() => console.log("Backend Warmed Up")).catch(e => console.log("Warm-up pending..."));
