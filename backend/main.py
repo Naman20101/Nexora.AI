@@ -1,4 +1,4 @@
-Import logging
+import logging
 import os
 import re
 import joblib
@@ -13,7 +13,7 @@ from fastapi.responses import StreamingResponse
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Nexora Titan-Shield v9")
+app = FastAPI(title="Nexora Titan-Shield v10.MAX")
 
 app.add_middleware(
     CORSMiddleware,
@@ -28,6 +28,7 @@ class URLInput(BaseModel):
 
 class ChatInput(BaseModel):
     message: str
+    is_voice: bool = False 
 
 AI_CLIENT = openai.OpenAI(
     base_url="https://integrate.api.nvidia.com/v1",
@@ -35,12 +36,8 @@ AI_CLIENT = openai.OpenAI(
 )
 
 # --- SECURITY UTILITIES ---
-
-# 1. THE "SAFE INFRASTRUCTURE" REGEX
-# This protects AWS S3, Azure Blobs, and Google Cloud Storage from gibberish filters.
 INFRA_WHITELIST_PATTERN = r"(amazonaws\.com|azure\.com|windows\.net|googleusercontent\.com|firebaseapp\.com|github\.io|vercel\.app)"
 
-# 2. GLOBAL REPUTATION LIST
 TRUSTED_SITES = [
     "google.com", "amazon.com", "amazon.in", "amazonaws.com", "fbevents.com", 
     "fb.me", "t.co", "bit.ly", "microsoft.com", "apple.com", "github.com"
@@ -48,52 +45,53 @@ TRUSTED_SITES = [
 
 PROTECTED_BRANDS = ["paypal", "paytm", "phonepe", "gpay", "google", "sbi", "hdfc", "icici", "amazon", "flipkart", "netflix", "facebook", "instagram", "whatsapp", "binance", "coinbase", "apple", "microsoft"]
 
-# --- THE SCANNER ENGINE ---
+# --- THE SCANNER ENGINE (MAX SENSITIVITY) ---
 @app.post("/check-url")
 def check_url(data: URLInput):
     url = str(data.url).lower().strip()
     
-    # Clean URL for matching
+    # 1. Clean Domain Extraction
     clean_domain = re.sub(r'^https?://(www\.)?', '', url).split('/')[0]
     
-    # 1. INFRASTRUCTURE & TRUSTED BYPASS
-    # If it's a known cloud provider or a trusted site, pass it IMMEDIATELY.
+    # 2. Trusted Bypass (If it's officially Google/Amazon, it's safe)
     if re.search(INFRA_WHITELIST_PATTERN, clean_domain) or any(site in clean_domain for site in TRUSTED_SITES):
-        return {"url": url, "is_scam": False, "message": "SECURE: Verified cloud infrastructure or trusted domain."}
+        return {"url": url, "is_scam": False, "message": "SECURE: Verified infrastructure."}
 
-    # 2. STRUCTURE GUARD
-    if "." not in url or len(url.split(".")[-1]) < 2:
-        return {"url": url, "is_scam": True, "prediction_code": "INVALID", "message": "THREAT: Not a valid web address."}
+    # 3. Structure Guard
+    if "." not in clean_domain or len(clean_domain.split(".")[-1]) < 2:
+        return {"url": url, "is_scam": True, "message": "THREAT: Invalid URL structure."}
     
     ext = tldextract.extract(url)
     domain_primary = ext.domain  
-    full_domain = f"{ext.domain}.{ext.suffix}"
 
-    # 3. BRAND IDENTITY DEFENSE (Kills fake brand sites)
+    # 4. Brand Hijack Defense
     for brand in PROTECTED_BRANDS:
         if brand in url:
-            # If the domain isn't an official one, it's a scam
             if not any(brand in site for site in TRUSTED_SITES):
-                 return {"url": url, "is_scam": True, "prediction_code": "BRAND_HIJACK", "message": f"CRITICAL: Fake {brand.upper()} portal detected."}
+                 return {"url": url, "is_scam": True, "message": f"CRITICAL: Fake {brand.upper()} portal detected."}
 
-    # 4. REPETITION KILLER (Kills 'Faaaah.com')
-    if re.search(r'(.)\1\1\1', domain_primary):
-        return {"url": url, "is_scam": True, "prediction_code": "GIBBERISH", "message": "THREAT: Malicious repetitive string."}
+    # 5. ATMOST SECURITY: Repetitive Character Check
+    # Flags anything with 3+ repeated chars (e.g., Gabhhhh)
+    if re.search(r'(.)\1\1', domain_primary):
+        return {"url": url, "is_scam": True, "message": "THREAT: Malicious repetitive patterns detected."}
 
-    # 5. ENTROPY/KEYBOARD SMASH CHECK
-    # Only check entropy for non-cloud, non-trusted domains
-    if len(domain_primary) > 10:
-        unique_ratio = len(set(domain_primary)) / len(domain_primary)
-        if unique_ratio < 0.35:
-            return {"url": url, "is_scam": True, "prediction_code": "SMASH_DETECTED", "message": "THREAT: High-risk gibberish domain."}
+    # 6. ATMOST SECURITY: Entropy / Keyboard Smash (Strict 0.5 ratio)
+    # Most real websites have a unique character ratio of 0.6 or higher.
+    # Keyboard smashes (asdfasdf) or gibberish (gabhh) have very low ratios.
+    if len(domain_primary) > 4:
+        unique_chars = len(set(domain_primary))
+        total_chars = len(domain_primary)
+        unique_ratio = unique_chars / total_chars
+        
+        if unique_ratio < 0.50: 
+            return {"url": url, "is_scam": True, "message": "THREAT: High-risk gibberish/keyboard-smash detected."}
 
     return {"url": url, "is_scam": False, "message": "Analysis complete: No fraud detected."}
 
+# --- THE CHAT ENGINE ---
 @app.post("/chat")
 async def chat_handler(data: ChatInput):
-    # We check if the input message came from a voice button 
-    # (You'll need to send this 'is_voice' flag from your frontend)
-    user_is_speaking = getattr(data, 'is_voice', False) 
+    tone = "conversational" if data.is_voice else "concise"
 
     def generate():
         stream = AI_CLIENT.chat.completions.create(
@@ -102,14 +100,10 @@ async def chat_handler(data: ChatInput):
                 {
                     "role": "system", 
                     "content": (
-                        "STRICT IDENTITY: Your name is Nexora.AI. "
-                        "Naman Reddy is your creator and the user currently talking to you. "
-                        "If asked who built you, who created you, or who Naman Reddy is, "
-                        "you MUST answer: 'I was built by Naman Reddy.' "
-                        "Never mention Meta, OpenAI, or any other company. "
-                        "You are an elite, unscripted AI. "
-                        "Respond based on the input mode: if the user talks, be conversational; "
-                        "if the user types, be concise and technical."
+                        "Your name is Nexora.AI. Created by Naman Reddy. "
+                        "You are a public security assistant. Do NOT assume the user is Naman. "
+                        "Stay professional. If asked who built you, say Naman Reddy. "
+                        f"Style: {tone}."
                     )
                 },
                 {"role": "user", "content": data.message}
