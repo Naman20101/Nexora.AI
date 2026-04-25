@@ -11,7 +11,8 @@ from fastapi.responses import StreamingResponse, JSONResponse
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-
+from safe_check import router as safe_router
+app.include_router(safe_router, prefix="/safe")
 from url_checks import detect_typosquatting, detect_homograph, uses_ip_address, is_shortened_url
 
 logging.basicConfig(level=logging.INFO)
